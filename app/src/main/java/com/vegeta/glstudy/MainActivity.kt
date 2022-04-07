@@ -62,19 +62,19 @@ class GLRenderer : GLSurfaceView.Renderer {
 class Triangle {
 
   private val vertexShaderCode = """
-      attribute vec4 vPosition;
-      uniform mat4 uMVPMatrix;
+      attribute vec4 a_Position;
+      uniform mat4 u_MVPMatrix;
       void main() {
-        gl_Position = uMVPMatrix * vPosition;
+        gl_Position = u_MVPMatrix * a_Position;
       }
   """
 
 
   private val fragmentShaderCode = """
       precision mediump float;
-      uniform vec4 vColor;
+      uniform vec4 u_Color;
       void main() {
-        gl_FragColor = vColor;
+        gl_FragColor = u_Color;
       }
   """
 
@@ -87,37 +87,35 @@ class Triangle {
     -0.5f, -0.311004243f, 0.0f,    // bottom left
     0.5f, -0.311004243f, 0.0f      // bottom right
   )
-  private var vertexBuffer: FloatBuffer =
-    // (number of coordinate values * 4 bytes per float)
-    ByteBuffer.allocateDirect(triangleCoords.size * 4).run {
-      // use the device hardware's native byte order
-      order(ByteOrder.nativeOrder())
 
-      // create a floating point buffer from the ByteBuffer
-      asFloatBuffer().apply {
-        // add the coordinates to the FloatBuffer
-        put(triangleCoords)
-        // set the buffer to read the first coordinate
-        position(0)
-      }
+  // (number of coordinate values * 4 bytes per float)
+  private var vertexBuffer: FloatBuffer = ByteBuffer.allocateDirect(triangleCoords.size * 4).run {
+    // use the device hardware's native byte order
+    order(ByteOrder.nativeOrder())
+
+    // create a floating point buffer from the ByteBuffer
+    asFloatBuffer().apply {
+      // add the coordinates to the FloatBuffer
+      put(triangleCoords)
+      // set the buffer to read the first coordinate
+      position(0)
     }
+  }
 
   private var glProgram: Int
 
   init {
-    val vertexShader: Int = loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode)
-    val fragmentShader: Int = loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode)
-
-    // create empty OpenGL ES Program
+    val vertexShader: Int = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER).also { shader ->
+      GLES20.glShaderSource(shader, vertexShaderCode)
+      GLES20.glCompileShader(shader)
+    }
+    val fragmentShader: Int = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER).also { shader ->
+      GLES20.glShaderSource(shader, fragmentShaderCode)
+      GLES20.glCompileShader(shader)
+    }
     glProgram = GLES20.glCreateProgram().also {
-
-      // add the vertex shader to program
       GLES20.glAttachShader(it, vertexShader)
-
-      // add the fragment shader to program
       GLES20.glAttachShader(it, fragmentShader)
-
-      // creates OpenGL ES program executables
       GLES20.glLinkProgram(it)
     }
   }
@@ -134,7 +132,7 @@ class Triangle {
     GLES20.glUseProgram(glProgram)
 
     // get handle to vertex shader's vPosition member
-    positionHandle = GLES20.glGetAttribLocation(glProgram, "vPosition").also {
+    positionHandle = GLES20.glGetAttribLocation(glProgram, "a_Position").also {
 
       // Enable a handle to the triangle vertices
       GLES20.glEnableVertexAttribArray(it)
@@ -150,13 +148,13 @@ class Triangle {
       )
 
       // get handle to fragment shader's vColor member
-      mColorHandle = GLES20.glGetUniformLocation(glProgram, "vColor").also { colorHandle ->
+      mColorHandle = GLES20.glGetUniformLocation(glProgram, "u_Color").also { colorHandle ->
 
         // Set color for drawing the triangle
         GLES20.glUniform4fv(colorHandle, 1, color, 0)
       }
 
-      vPMatrixHandle = GLES20.glGetUniformLocation(glProgram, "uMVPMatrix")
+      vPMatrixHandle = GLES20.glGetUniformLocation(glProgram, "u_MVPMatrix")
       GLES20.glUniformMatrix4fv(vPMatrixHandle, 1, false, mvpMatrix, 0)
 
       // Draw the triangle
@@ -168,14 +166,3 @@ class Triangle {
   }
 }
 
-fun loadShader(type: Int, shaderCode: String): Int {
-
-  // create a vertex shader type (GLES20.GL_VERTEX_SHADER)
-  // or a fragment shader type (GLES20.GL_FRAGMENT_SHADER)
-  return GLES20.glCreateShader(type).also { shader ->
-
-    // add the source code to the shader and compile it
-    GLES20.glShaderSource(shader, shaderCode)
-    GLES20.glCompileShader(shader)
-  }
-}
