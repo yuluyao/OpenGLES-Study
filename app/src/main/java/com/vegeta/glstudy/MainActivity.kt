@@ -29,8 +29,8 @@ class MainActivity : AppCompatActivity() {
 class GLRenderer : GLSurfaceView.Renderer {
   private lateinit var triangle: Triangle
 
-  private val vPMatrix = FloatArray(16)
-  private val projectionMatrix = FloatArray(16)
+  private val mvpMatrix = FloatArray(16)
+  private val projMatrix = FloatArray(16)
   private val viewMatrix = FloatArray(16)
 
   override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
@@ -44,16 +44,16 @@ class GLRenderer : GLSurfaceView.Renderer {
 
     // this projection matrix is applied to object coordinates
     // in the onDrawFrame() method
-    Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 3f, 7f)
+    Matrix.frustumM(projMatrix, 0, -ratio, ratio, -1f, 1f, 3f, 7f)
   }
 
   override fun onDrawFrame(gl: GL10) {
     GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
 
     Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, -3f, 0f, 0f, 0f, 0f, 1.0f, 0.0f)
-    Matrix.multiplyMM(vPMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
+    Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, viewMatrix, 0)
 
-    triangle.draw(vPMatrix)
+    triangle.draw(mvpMatrix)
   }
 
 }
