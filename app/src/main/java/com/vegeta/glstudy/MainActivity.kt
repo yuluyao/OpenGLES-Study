@@ -2,6 +2,7 @@ package com.vegeta.glstudy
 
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
+import android.opengl.Matrix
 import android.os.Bundle
 import android.view.Window
 import android.view.WindowManager
@@ -22,7 +23,7 @@ class MainActivity : AppCompatActivity() {
     window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
 
-    setContentView(R.layout.activity_main)
+//    setContentView(R.layout.activity_main)
 
 
     val glSurfaceView = GLSurfaceView(this).apply {
@@ -45,8 +46,9 @@ class GLRenderer : GLSurfaceView.Renderer {
       attribute vec4 a_Position;
       attribute vec4 a_Color;
       varying vec4 v_Color;
+      uniform mat4 u_MvpMatrix;
       void main() {
-        gl_Position = a_Position;
+        gl_Position = u_MvpMatrix * a_Position;
         v_Color = a_Color;
       }
   """
@@ -87,7 +89,9 @@ class GLRenderer : GLSurfaceView.Renderer {
     val ratio: Float = width.toFloat() / height.toFloat()
 
     // in the onDrawFrame() method
-//    Matrix.frustumM(projMatrix, 0, -ratio, ratio, -1f, 1f, 3f, 7f)
+    Matrix.frustumM(projMatrix, 0, -ratio, ratio, -1f, 1f, 50f, 100f)
+    Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, 60f, 0f, 0f, 0f, 0f, 1f, 0f)
+    Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, viewMatrix, 0)
   }
 
   var triangleCoords = floatArrayOf(     // in counterclockwise order:
@@ -98,19 +102,20 @@ class GLRenderer : GLSurfaceView.Renderer {
   val COORDS_PER_VERTEX = 3
   private val vertexCount: Int = triangleCoords.size / COORDS_PER_VERTEX
 
-  private var vertexBuffer: FloatBuffer = ByteBuffer.allocateDirect(triangleCoords.size * Float.SIZE_BYTES).run {
-    order(ByteOrder.nativeOrder())
-    asFloatBuffer().apply {
-      put(triangleCoords)
-      position(0)
+  private var vertexBuffer: FloatBuffer =
+    ByteBuffer.allocateDirect(triangleCoords.size * Float.SIZE_BYTES).run {
+      order(ByteOrder.nativeOrder())
+      asFloatBuffer().apply {
+        put(triangleCoords)
+        position(0)
+      }
     }
-  }
 
   //三个顶点的颜色参数
   private val colors = floatArrayOf(
-    1.0f, 0.0f, 0.0f, 1.0f,// top
-    0.0f, 1.0f, 0.0f, 1.0f,// bottom left
-    0.0f, 0.0f, 1.0f, 1.0f// bottom right
+    1.0f, 0.0f, 0.0f, 1.0f,// top, red
+    0.0f, 1.0f, 0.0f, 1.0f,// bottom left, green
+    0.0f, 0.0f, 1.0f, 1.0f// bottom right, blue
   )
   private var colorBuffer = ByteBuffer.allocateDirect(colors.size * Float.SIZE_BYTES).run {
     order(ByteOrder.nativeOrder())
@@ -142,6 +147,10 @@ class GLRenderer : GLSurfaceView.Renderer {
     //启用顶点颜色句柄
     GLES30.glEnableVertexAttribArray(a_Color);
 
+
+    val u_MvpMatrix = GLES30.glGetUniformLocation(glProgram, "u_MvpMatrix")
+    GLES30.glUniformMatrix4fv(u_MvpMatrix, 1, false, mvpMatrix, 0)
+
     //绘制三个点
     //GLES30.glDrawArrays(GLES30.GL_POINTS, 0, POSITION_COMPONENT_COUNT);
 
@@ -159,7 +168,6 @@ class GLRenderer : GLSurfaceView.Renderer {
 //    Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, -3f, 0f, 0f, 0f, 0f, 1.0f, 0.0f)
 //    Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, viewMatrix, 0)
 
-//    triangle.draw(mvpMatrix)
   }
 
 }
