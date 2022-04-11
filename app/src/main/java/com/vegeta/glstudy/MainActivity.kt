@@ -5,25 +5,18 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.opengl.GLSurfaceView
-import android.opengl.Matrix
 import android.os.Bundle
-import android.view.Window
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.getSystemService
-import com.google.android.material.shape.TriangleEdgeTreatment
 import kotlin.math.min
 
 class MainActivity : AppCompatActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    requestWindowFeature(Window.FEATURE_NO_TITLE)
 
-    window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-
-
-//    val renderer = TexRenderer(this)
+//    val renderer = HelloTriangle(this)
     val renderer = TriangleRenderer(this)
     val glSurfaceView = GLSurfaceView(this).apply {
       setEGLContextClientVersion(3)
@@ -31,6 +24,7 @@ class MainActivity : AppCompatActivity() {
 
     }
     setContentView(glSurfaceView)
+    window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
 
     val sensorManager = getSystemService<SensorManager>()
     val listener = object : SensorEventListener {
@@ -75,13 +69,13 @@ class MainActivity : AppCompatActivity() {
           val scaleX = min(maxAngle, axisX * dT) / maxAngle
           val scaleY = min(maxAngle, axisY * dT) / maxAngle
 //          val modelMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
-          Matrix.translateM(
-            renderer.modelMatrix,
-            0,
-            scaleY * 0.5f,
-            -scaleX * 0.5f,
-            0f
-          )
+//          Matrix.translateM(
+//            renderer.modelMatrix,
+//            0,
+//            scaleY * 0.5f,
+//            -scaleX * 0.5f,
+//            0f
+//          )
 //          Matrix.multiplyMM(renderer.mvpMatrix, 0, renderer.mvpMatrix, 0, modelMatrix, 0)
 
         }

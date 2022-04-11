@@ -18,27 +18,6 @@ class TriangleRenderer(val context: Context) : GLSurfaceView.Renderer {
   val viewMatrix = FloatArray(16)
   val modelMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
 
-  private val vertexShaderCode = """
-      attribute vec4 a_Position;
-      attribute vec4 a_Color;
-      varying vec4 v_Color;
-      uniform mat4 u_MvpMatrix;
-      void main() {
-        gl_Position = u_MvpMatrix * a_Position;
-        v_Color = a_Color;
-      }
-  """
-
-
-  private val fragmentShaderCode = """
-      precision mediump float;
-      varying vec4 v_Color;
-      void main() {
-        gl_FragColor = v_Color;
-      }
-  """
-
-
   private var glProgram: Int = 0
   override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
     GLES30.glClearColor(0.2f, 0.2f, 0.2f, 1f)
@@ -56,8 +35,8 @@ class TriangleRenderer(val context: Context) : GLSurfaceView.Renderer {
       GLES30.glAttachShader(it, fragmentShader)
       GLES30.glLinkProgram(it)
     }
-
     GLES30.glUseProgram(glProgram)
+
   }
 
   override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
@@ -74,19 +53,18 @@ class TriangleRenderer(val context: Context) : GLSurfaceView.Renderer {
 
   }
 
-  var triangleCoords = floatArrayOf(     // in counterclockwise order:
-    0.0f, 0.622008459f, 0.0f,      // top
-    -0.5f, -0.311004243f, 0.0f,    // bottom left
-    0.5f, -0.311004243f, 0.0f      // bottom right
+  var vertecies = floatArrayOf(     // in counterclockwise order:
+    -0.5f, -0.5f, 0.0f,
+    0.5f, -0.5f, 0.0f,
+    0.0f,  0.5f, 0.0f
   )
   val COORDS_PER_VERTEX = 3
-  private val vertexCount: Int = triangleCoords.size / COORDS_PER_VERTEX
+  private val vertexCount: Int = vertecies.size / COORDS_PER_VERTEX
 
-  private var vertexBuffer: FloatBuffer =
-    ByteBuffer.allocateDirect(triangleCoords.size * Float.SIZE_BYTES).run {
+  private var vertexBuffer = ByteBuffer.allocateDirect(vertecies.size * Float.SIZE_BYTES).run {
       order(ByteOrder.nativeOrder())
       asFloatBuffer().apply {
-        put(triangleCoords)
+        put(vertecies)
         position(0)
       }
     }
