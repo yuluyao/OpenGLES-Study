@@ -1,5 +1,6 @@
 package com.vegeta.glstudy
 
+import android.content.Context
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
@@ -9,7 +10,7 @@ import java.nio.FloatBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class GLRenderer : GLSurfaceView.Renderer {
+class TriangleRenderer(val context: Context) : GLSurfaceView.Renderer {
 //  private lateinit var triangle: Triangle
 
   val mvpMatrix = FloatArray(16)

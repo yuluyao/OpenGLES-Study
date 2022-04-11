@@ -11,6 +11,7 @@ import android.view.Window
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.getSystemService
+import com.google.android.material.shape.TriangleEdgeTreatment
 import kotlin.math.min
 
 class MainActivity : AppCompatActivity() {
@@ -26,7 +27,7 @@ class MainActivity : AppCompatActivity() {
 //    setContentView(R.layout.activity_main)
 
 
-    val renderer = TexRenderer(this)
+    val renderer = TriangleRenderer(this)
     val glSurfaceView = GLSurfaceView(this).apply {
       setEGLContextClientVersion(3)
       setRenderer(renderer)
