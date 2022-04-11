@@ -16,12 +16,13 @@ class HelloTriangle(val context: Context) : GLSurfaceView.Renderer {
 
     glProgram = Qutil.initShader(context, R.raw.hello_triangle_vs, R.raw.hello_triangle_fs)
     GLES30.glUseProgram(glProgram)
-    
+
     GLES30.glDisableVertexAttribArray(0)
   }
 
   override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
     GLES30.glViewport(0, 0, width, height)
+
   }
 
   private val vertices = floatArrayOf(
@@ -38,12 +39,6 @@ class HelloTriangle(val context: Context) : GLSurfaceView.Renderer {
   }
 
   override fun onDrawFrame(gl: GL10) {
-
-//    val buffers = IntArray(1)
-//    GLES30.glGenBuffers(1, buffers, 0)
-//    GLES30.glBindBuffer(GLES30.GL_ARRAY_BUFFER, vbo)
-//    GLES30.glBufferData(GLES30.GL_ARRAY_BUFFER,vertices.size*Float.SIZE_BYTES,vbo,GLES30.GL_STATIC_DRAW)
-
     GLES30.glVertexAttribPointer(
       0,
       3,
@@ -55,7 +50,7 @@ class HelloTriangle(val context: Context) : GLSurfaceView.Renderer {
     GLES30.glEnableVertexAttribArray(0)
 
     GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, 3)
-    
+
     GLES30.glDisableVertexAttribArray(0)
 
 
