@@ -7,8 +7,6 @@ import android.opengl.GLSurfaceView
 import android.opengl.GLUtils
 import android.opengl.Matrix
 import android.util.Log
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
@@ -16,59 +14,27 @@ import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
 class TexRenderer(val context: Context) : GLSurfaceView.Renderer {
-//  private lateinit var triangle: Triangle
 
   val mvpMatrix = FloatArray(16)
   val projMatrix = FloatArray(16)
   val viewMatrix = FloatArray(16)
   val modelMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
 
-  private val vertexShaderCode = """
-#version 300 es
-layout (location = 0) in vec4 a_Position;
-layout (location = 1) in vec2 a_TextureCoord;
-uniform mat4 u_MvpMatrix;
-//输出纹理坐标(s,t)
-out vec2 vTexCoord;
-void main() {
-    gl_Position  = u_MvpMatrix*a_Position;
-    gl_PointSize = 10.0;
-    vTexCoord = a_TextureCoord;
-}
-  """
-
-
-  private val fragmentShaderCode = """
-#version 300 es
-precision mediump float;
-uniform sampler2D uTextureUnit;
-//接收刚才顶点着色器传入的纹理坐标(s,t)
-in vec2 vTexCoord;
-out vec4 vFragColor;
-void main() {
-    vFragColor = texture(uTextureUnit,vTexCoord);
-}
-  """
-
-
   /**
    * 顶点坐标
    */
-  var POSITION_VERTICES = floatArrayOf(
+  var vertices = floatArrayOf(
     0f, 0f, 0f,     //顶点坐标V0
     1f, 1f, 0f,     //顶点坐标V1
     -1f, 1f, 0f,    //顶点坐标V2
     -1f, -1f, 0f,   //顶点坐标V3
     1f, -1f, 0f     //顶点坐标V4
   )
-  val COORDS_PER_VERTEX = 3
-  private val vertexCount: Int = POSITION_VERTICES.size / COORDS_PER_VERTEX
 
-  private var vertexBuffer: FloatBuffer =
-    ByteBuffer.allocateDirect(POSITION_VERTICES.size * Float.SIZE_BYTES).run {
+  private var vertexBuffer = ByteBuffer.allocateDirect(vertices.size * Float.SIZE_BYTES).run {
       order(ByteOrder.nativeOrder())
       asFloatBuffer().apply {
-        put(POSITION_VERTICES)
+        put(vertices)
         position(0)
       }
     }
@@ -76,18 +42,17 @@ void main() {
   /**
    * 顶点索引
    */
-  var POSITION_VERTEX_INDEX = intArrayOf(
+  var vertexIndex = intArrayOf(
     0, 1, 2,  //V0,V1,V2 三个顶点组成一个三角形
     0, 2, 3,  //V0,V2,V3 三个顶点组成一个三角形
     0, 3, 4,  //V0,V3,V4 三个顶点组成一个三角形
     0, 4, 1   //V0,V4,V1 三个顶点组成一个三角形
   )
 
-  private val vertexIndexBuffer =
-    ByteBuffer.allocateDirect(POSITION_VERTEX_INDEX.size * Int.SIZE_BYTES).run {
+  private val vertexIndexBuffer = ByteBuffer.allocateDirect(vertexIndex.size * Int.SIZE_BYTES).run {
       order(ByteOrder.nativeOrder())
       asIntBuffer().apply {
-        put(POSITION_VERTEX_INDEX)
+        put(vertexIndex)
         position(0)
       }
     }
@@ -95,7 +60,7 @@ void main() {
   /**
    * 纹理坐标
    */
-  var TEX_VERTICES = floatArrayOf(
+  var texVertices = floatArrayOf(
     0.5f, 0.5f, //纹理坐标V0
     1f, 0f,     //纹理坐标V1
     0f, 0f,     //纹理坐标V2
@@ -103,10 +68,10 @@ void main() {
     1f, 1.0f    //纹理坐标V4
   )
 
-  private var texBuffer = ByteBuffer.allocateDirect(TEX_VERTICES.size * Float.SIZE_BYTES).run {
+  private var texBuffer = ByteBuffer.allocateDirect(texVertices.size * Float.SIZE_BYTES).run {
     order(ByteOrder.nativeOrder())
     asFloatBuffer().apply {
-      put(TEX_VERTICES)
+      put(texVertices)
       position(0)
     }
   }
@@ -116,13 +81,11 @@ void main() {
     GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1f)
 
     val vertexShader: Int = GLES30.glCreateShader(GLES30.GL_VERTEX_SHADER).also { shader ->
-//      GLES30.glShaderSource(shader, loadShaderFile(context, R.raw.pap_vs))
-      GLES30.glShaderSource(shader, vertexShaderCode)
+      GLES30.glShaderSource(shader, Qutil.loadShaderFile(context, R.raw.pic_vs))
       GLES30.glCompileShader(shader)
     }
     val fragmentShader: Int = GLES30.glCreateShader(GLES30.GL_FRAGMENT_SHADER).also { shader ->
-//      GLES30.glShaderSource(shader, loadShaderFile(context, R.raw.pap_fs))
-      GLES30.glShaderSource(shader, fragmentShaderCode)
+      GLES30.glShaderSource(shader, Qutil.loadShaderFile(context, R.raw.pic_fs))
       GLES30.glCompileShader(shader)
     }
     glProgram = GLES30.glCreateProgram().also {
@@ -200,7 +163,7 @@ void main() {
 //      GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, vertexCount);
     GLES30.glDrawElements(
       GLES30.GL_TRIANGLES,
-      POSITION_VERTEX_INDEX.size,
+      vertexIndex.size,
       GLES30.GL_INT,
       vertexIndexBuffer
     )
@@ -211,22 +174,6 @@ void main() {
   }
 
   private val TAG = "glgl"
-
-  private fun loadShaderFile(context: Context, resId: Int): String {
-    val sb = StringBuilder()
-
-    val inputStream = context.resources.openRawResource(resId)
-    val inputStreamReader = InputStreamReader(inputStream)
-    val bufferedReader = BufferedReader(inputStreamReader)
-    var textLine: String?
-
-    do {
-      textLine = bufferedReader.readLine()
-      sb.append("$textLine\n")
-    } while (textLine != null)
-
-    return sb.toString()
-  }
 
   private fun loadTexture(): Int {
     val textureIds = IntArray(1)

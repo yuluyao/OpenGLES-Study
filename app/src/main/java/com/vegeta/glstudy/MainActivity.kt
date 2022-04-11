@@ -19,14 +19,11 @@ class MainActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     requestWindowFeature(Window.FEATURE_NO_TITLE)
-//    window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
     window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
 
 
-//    setContentView(R.layout.activity_main)
-
-
+//    val renderer = TexRenderer(this)
     val renderer = TriangleRenderer(this)
     val glSurfaceView = GLSurfaceView(this).apply {
       setEGLContextClientVersion(3)

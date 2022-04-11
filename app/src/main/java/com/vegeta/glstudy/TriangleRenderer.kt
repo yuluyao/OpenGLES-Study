@@ -11,7 +11,7 @@ import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
 class TriangleRenderer(val context: Context) : GLSurfaceView.Renderer {
-//  private lateinit var triangle: Triangle
+  private val TAG="glgl"
 
   val mvpMatrix = FloatArray(16)
   val projMatrix = FloatArray(16)
@@ -44,11 +44,11 @@ class TriangleRenderer(val context: Context) : GLSurfaceView.Renderer {
     GLES30.glClearColor(0.2f, 0.2f, 0.2f, 1f)
 
     val vertexShader: Int = GLES30.glCreateShader(GLES30.GL_VERTEX_SHADER).also { shader ->
-      GLES30.glShaderSource(shader, vertexShaderCode)
+      GLES30.glShaderSource(shader, Qutil.loadShaderFile(context,R.raw.triangle_vs))
       GLES30.glCompileShader(shader)
     }
     val fragmentShader: Int = GLES30.glCreateShader(GLES30.GL_FRAGMENT_SHADER).also { shader ->
-      GLES30.glShaderSource(shader, fragmentShaderCode)
+      GLES30.glShaderSource(shader, Qutil.loadShaderFile(context,R.raw.triangle_fs))
       GLES30.glCompileShader(shader)
     }
     glProgram = GLES30.glCreateProgram().also {
@@ -154,5 +154,6 @@ class TriangleRenderer(val context: Context) : GLSurfaceView.Renderer {
 //    Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, viewMatrix, 0)
 
   }
+
 
 }
