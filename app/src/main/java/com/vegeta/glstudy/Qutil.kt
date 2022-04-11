@@ -37,7 +37,7 @@ object Qutil {
     var str: String?
     while (bufferedReader.readLine().also { str = it } != null) {
       buffer.append(str)
-      Log.i(TAG, "[read]: $str")
+      Log.v(TAG, "[read]: $str")
       buffer.append("\n")
     }
     return buffer.toString()

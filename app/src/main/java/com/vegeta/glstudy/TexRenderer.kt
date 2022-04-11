@@ -78,15 +78,22 @@ class TexRenderer(val context: Context) : GLSurfaceView.Renderer {
   private var glProgram: Int = 0
   override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
     GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1f)
-    glProgram = Qutil.initShader(context,R.raw.pic_vs,R.raw.pic_fs)
-    textureId = loadTexture()
+    glProgram = Qutil.initShader(context, R.raw.pic_vs, R.raw.pic_fs)
+//    textureId = loadTexture()
+    val a = Qutil.loadTexture(context)
+    textureId = a[0]
+    bitmapSize[0] = a[1]
+    bitmapSize[1] = a[2]
   }
 
+
   private var textureId = 0
+  private val bitmapSize = IntArray(2)
 
   override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
     GLES30.glViewport(0, 0, width, height)
     Log.i(TAG, "[screen size] width: $width, height: $height")
+    Log.i(TAG, "[bitmap size] width: ${bitmapSize[0]}, height: ${bitmapSize[1]}")
     val ratio: Float = width.toFloat() / height.toFloat()
 
     // in the onDrawFrame() method
@@ -96,7 +103,6 @@ class TexRenderer(val context: Context) : GLSurfaceView.Renderer {
 //      Matrix.setRotateM(modelMatrix, 0, 20f, 0f, 0f, 0f)
 //    Matrix.translateM(modelMatrix, 0, 0.5f, 0f, 0f)
 //      Matrix.rotateM(modelMatrix, 0, 90f, 0f, 0f, 1f)
-
 
   }
 
