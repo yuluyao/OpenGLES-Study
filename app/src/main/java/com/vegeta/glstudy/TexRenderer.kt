@@ -9,15 +9,14 @@ import android.opengl.Matrix
 import android.util.Log
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.FloatBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
 class TexRenderer(val context: Context) : GLSurfaceView.Renderer {
 
-  val mvpMatrix = FloatArray(16)
-  val projMatrix = FloatArray(16)
-  val viewMatrix = FloatArray(16)
+  val mvpMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
+  val projMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
+  val viewMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
   val modelMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
 
   /**
@@ -32,12 +31,12 @@ class TexRenderer(val context: Context) : GLSurfaceView.Renderer {
   )
 
   private var vertexBuffer = ByteBuffer.allocateDirect(vertices.size * Float.SIZE_BYTES).run {
-      order(ByteOrder.nativeOrder())
-      asFloatBuffer().apply {
-        put(vertices)
-        position(0)
-      }
+    order(ByteOrder.nativeOrder())
+    asFloatBuffer().apply {
+      put(vertices)
+      position(0)
     }
+  }
 
   /**
    * 顶点索引
@@ -50,12 +49,12 @@ class TexRenderer(val context: Context) : GLSurfaceView.Renderer {
   )
 
   private val vertexIndexBuffer = ByteBuffer.allocateDirect(vertexIndex.size * Int.SIZE_BYTES).run {
-      order(ByteOrder.nativeOrder())
-      asIntBuffer().apply {
-        put(vertexIndex)
-        position(0)
-      }
+    order(ByteOrder.nativeOrder())
+    asIntBuffer().apply {
+      put(vertexIndex)
+      position(0)
     }
+  }
 
   /**
    * 纹理坐标
@@ -102,13 +101,15 @@ class TexRenderer(val context: Context) : GLSurfaceView.Renderer {
 
   override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
     GLES30.glViewport(0, 0, width, height)
+    Log.i(TAG, "[screen size] width: $width, height: $height")
     val ratio: Float = width.toFloat() / height.toFloat()
 
     // in the onDrawFrame() method
-    Matrix.frustumM(projMatrix, 0, -ratio, ratio, -1f, 1f, 50f, 100f)
-    Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, 60f, 0f, 0f, 0f, 0f, 1f, 0f)
+//    Matrix.frustumM(projMatrix, 0, -ratio, ratio, -1f, 1f, 50f, 100f)
+    Matrix.orthoM(projMatrix, 0, -0.5f, 0.5f, -0.5f, 0.5f, 50f, 100f)
+    Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, 90f, 0f, 0f, 0f, 0f, 1f, 0f)
 //      Matrix.setRotateM(modelMatrix, 0, 20f, 0f, 0f, 0f)
-//      Matrix.translateM(modelMatrix, 0, 0.5f, 0f, 0f)
+//    Matrix.translateM(modelMatrix, 0, 0.5f, 0f, 0f)
 //      Matrix.rotateM(modelMatrix, 0, 90f, 0f, 0f, 1f)
 
 
@@ -152,19 +153,10 @@ class TexRenderer(val context: Context) : GLSurfaceView.Renderer {
     GLES30.glUniformMatrix4fv(u_MvpMatrix, 1, false, mvpMatrix, 0)
 
 
-    //绘制三个点
-    //GLES30.glDrawArrays(GLES30.GL_POINTS, 0, POSITION_COMPONENT_COUNT);
-
-    //绘制三条线
-    //    GLES30.glLineWidth(3f);//设置线宽
-    //    GLES30.glDrawArrays(GLES30.GL_LINE_LOOP, 0, 3);
-
-    //绘制三角形
-//      GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, vertexCount);
     GLES30.glDrawElements(
       GLES30.GL_TRIANGLES,
       vertexIndex.size,
-      GLES30.GL_INT,
+      GLES30.GL_UNSIGNED_INT,
       vertexIndexBuffer
     )
 
@@ -190,7 +182,7 @@ class TexRenderer(val context: Context) : GLSurfaceView.Renderer {
       BitmapFactory.decodeResource(context.resources, R.drawable.test_texture, options)
         ?: run {
           GLES30.glDeleteTextures(1, textureIds, 0)
-          Log.e(TAG,"加载bitmap错误")
+          Log.e(TAG, "加载bitmap错误")
           return 0
         }
     // 绑定纹理
