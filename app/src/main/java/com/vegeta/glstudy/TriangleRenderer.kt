@@ -109,9 +109,9 @@ class TriangleRenderer(val context: Context) : GLSurfaceView.Renderer {
     GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
 
     //准备坐标数据
-    val a_Position = GLES30.glGetAttribLocation(glProgram, "a_Position")
+//    val a_Position = GLES30.glGetAttribLocation(glProgram, "a_Position")
     GLES30.glVertexAttribPointer(
-      a_Position,
+      0,
       COORDS_PER_VERTEX,
       GLES30.GL_FLOAT,
       false,
@@ -119,13 +119,13 @@ class TriangleRenderer(val context: Context) : GLSurfaceView.Renderer {
       vertexBuffer
     );
     //启用顶点位置句柄
-    GLES30.glEnableVertexAttribArray(a_Position);
+    GLES30.glEnableVertexAttribArray(0);
 
     //准备颜色数据
-    val a_Color = GLES30.glGetAttribLocation(glProgram, "a_Color")
-    GLES30.glVertexAttribPointer(a_Color, 4, GLES30.GL_FLOAT, false, 0, colorBuffer);
+//    val a_Color = GLES30.glGetAttribLocation(glProgram, "a_Color")
+    GLES30.glVertexAttribPointer(1, 4, GLES30.GL_FLOAT, false, 0, colorBuffer);
     //启用顶点颜色句柄
-    GLES30.glEnableVertexAttribArray(a_Color);
+    GLES30.glEnableVertexAttribArray(1);
 
 
     Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, viewMatrix, 0)
@@ -147,8 +147,8 @@ class TriangleRenderer(val context: Context) : GLSurfaceView.Renderer {
     GLES30.glDrawArrays(GLES30.GL_TRIANGLES, 0, vertexCount);
 
     //禁止顶点数组的句柄
-    GLES30.glDisableVertexAttribArray(a_Position);
-    GLES30.glDisableVertexAttribArray(a_Color);
+    GLES30.glDisableVertexAttribArray(0);
+    GLES30.glDisableVertexAttribArray(1);
 
 //    Matrix.setLookAtM(viewMatrix, 0, 0f, 0f, -3f, 0f, 0f, 0f, 0f, 1.0f, 0.0f)
 //    Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, viewMatrix, 0)
