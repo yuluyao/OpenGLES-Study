@@ -16,8 +16,8 @@ class MainActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-//    val renderer = HelloTriangle(this)
-    val renderer = TriangleRenderer(this)
+    val renderer = HelloTriangle(this)
+//    val renderer = TriangleRenderer(this)
     val glSurfaceView = GLSurfaceView(this).apply {
       setEGLContextClientVersion(3)
       setRenderer(renderer)
