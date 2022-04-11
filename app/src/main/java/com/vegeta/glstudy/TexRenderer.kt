@@ -78,21 +78,6 @@ class TexRenderer(val context: Context) : GLSurfaceView.Renderer {
   private var glProgram: Int = 0
   override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
     GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1f)
-
-//    val vertexShader: Int = GLES30.glCreateShader(GLES30.GL_VERTEX_SHADER).also { shader ->
-//      GLES30.glShaderSource(shader, Qutil.loadShaderFile(context, R.raw.pic_vs))
-//      GLES30.glCompileShader(shader)
-//    }
-//    val fragmentShader: Int = GLES30.glCreateShader(GLES30.GL_FRAGMENT_SHADER).also { shader ->
-//      GLES30.glShaderSource(shader, Qutil.loadShaderFile(context, R.raw.pic_fs))
-//      GLES30.glCompileShader(shader)
-//    }
-//    glProgram = GLES30.glCreateProgram().also {
-//      GLES30.glAttachShader(it, vertexShader)
-//      GLES30.glAttachShader(it, fragmentShader)
-//      GLES30.glLinkProgram(it)
-//    }
-//    GLES30.glUseProgram(glProgram)
     glProgram = Qutil.initShader(context,R.raw.pic_vs,R.raw.pic_fs)
     textureId = loadTexture()
   }

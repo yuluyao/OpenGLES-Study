@@ -13,10 +13,7 @@ class HelloTriangle(val context: Context) : GLSurfaceView.Renderer {
   private var glProgram: Int = 0
   override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
     GLES30.glClearColor(0.9f, 0.9f, 0.9f, 1f)
-
     glProgram = Qutil.initShader(context, R.raw.hello_triangle_vs, R.raw.hello_triangle_fs)
-    GLES30.glUseProgram(glProgram)
-
     GLES30.glDisableVertexAttribArray(0)
   }
 
