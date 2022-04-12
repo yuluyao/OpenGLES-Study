@@ -4,7 +4,6 @@ import android.content.Context
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
-import android.util.Log
 import java.nio.FloatBuffer
 import java.nio.ShortBuffer
 import javax.microedition.khronos.egl.EGLConfig
@@ -28,8 +27,10 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     mvpMatrixLoc = GLES30.glGetUniformLocation(mProgramHandle, "mvpMatrix")
     textureLoc = GLES30.glGetUniformLocation(mProgramHandle, "u_Texture")
 
-    val a = Qutil.loadTexture(context,R.drawable.earth)
-    textureId=a[0]
+//    val a = Qutil.loadTexture(context, R.drawable.earth)
+//    val a = Qutil.loadTexture(context, R.drawable.test_texture)
+    val a = Qutil.loadTexture(context, R.drawable.senery2)
+    textureId = a[0]
   }
 
 
@@ -40,30 +41,46 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
 
   override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
     GLES30.glViewport(0, 0, width, height)
+    val ratio = width.toFloat() / height
 
-//    Matrix.setIdentityM(viewMatrix, 0)
+//    observeOut(ratio)
+    observeIn(ratio)
+  }
+
+  /**
+   * 从球体外部观察
+   */
+  private fun observeOut(ratio: Float) {
     Matrix.setLookAtM(
       viewMatrix, 0,
-      0F, 5F, 10F,
+      0F, 0F, 75f,
       0F, 0F, 0F,
       0F, 1F, 0F
     )
+    Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 15f, 100f)
+  }
 
-//    Matrix.setIdentityM(projectionMatrix, 0)
-    val ratio = width.toFloat() / height
-    //设置透视投影
-    Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 3f, 20f)
-
+  /**
+   * 在球体内部观察
+   */
+  private fun observeIn(ratio: Float) {
+    Matrix.setLookAtM(
+      viewMatrix, 0,
+      0F, 0F, 0f,
+      0F, 0F, 1F,
+      0F, 1F, 0F
+    )
+    Matrix.perspectiveM(projectionMatrix, 0, 60f, ratio, 1f, 10f)
 
   }
 
-  private var textureId =0
+  private var textureId = 0
 
 
   private lateinit var vertexBuffer: FloatBuffer
   private lateinit var texBuffer: FloatBuffer
   private lateinit var mIndicesBuffer: ShortBuffer
-  private var indicesNum =0
+  private var indicesNum = 0
 
   override fun onDrawFrame(gl: GL10?) {
     GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)

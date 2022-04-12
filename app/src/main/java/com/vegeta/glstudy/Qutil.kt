@@ -59,6 +59,7 @@ object Qutil {
 
     val options = BitmapFactory.Options().apply {
       inScaled = false
+      inSampleSize = 2
     }
     val bitmap =
       BitmapFactory.decodeResource(context.resources, resId, options)
@@ -83,6 +84,7 @@ object Qutil {
 
     result[1] = bitmap.width
     result[2] = bitmap.height
+    Log.i(TAG, "bitmap: [memory: ${bitmap.byteCount}, width: ${bitmap.width}, height: ${bitmap.height}]")
     // 释放Bitmap
     bitmap.recycle()
     // 解绑
