@@ -18,7 +18,7 @@ import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import kotlin.math.min
 
-class TexRenderer(val context: Context) : GLSurfaceView.Renderer {
+class PicRenderer(val context: Context) : GLSurfaceView.Renderer {
 
   val mvpMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
   val projMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }

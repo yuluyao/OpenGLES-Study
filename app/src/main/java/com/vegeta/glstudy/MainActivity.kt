@@ -8,6 +8,7 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
 import com.vegeta.glstudy.databinding.ActivityMainBinding
+import com.vegeta.glstudy.learn.HelloTriangle
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,7 +30,7 @@ class MainActivity : AppCompatActivity() {
       }
       when (view.id) {
         R.id.btnTriangle -> glSurfaceView.setRenderer(TriangleRenderer(this))
-        R.id.btnPic -> glSurfaceView.setRenderer(TexRenderer(this))
+        R.id.btnPic -> glSurfaceView.setRenderer(PicRenderer(this))
         R.id.btnSphere -> glSurfaceView.setRenderer(SphereRenderer(this))
         R.id.learnHelloTriangle -> glSurfaceView.setRenderer(HelloTriangle(this))
         else -> return@click

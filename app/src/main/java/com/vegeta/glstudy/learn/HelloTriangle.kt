@@ -1,8 +1,10 @@
-package com.vegeta.glstudy
+package com.vegeta.glstudy.learn
 
 import android.content.Context
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
+import com.vegeta.glstudy.Qutil
+import com.vegeta.glstudy.R
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.microedition.khronos.egl.EGLConfig
