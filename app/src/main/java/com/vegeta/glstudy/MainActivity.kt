@@ -20,19 +20,44 @@ class MainActivity : AppCompatActivity() {
     window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
 
     val clickListener = click@{ view: View ->
-      val glSurfaceView = GLSurfaceView(this).apply {
-        layoutParams = FrameLayout.LayoutParams(
-          FrameLayout.LayoutParams.MATCH_PARENT,
-          FrameLayout.LayoutParams.MATCH_PARENT
-        )
-        setEGLContextClientVersion(3)
+      val lp = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        FrameLayout.LayoutParams.MATCH_PARENT
+      )
+      val glSurfaceView: GLSurfaceView
 //        renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
-      }
       when (view.id) {
-        R.id.btnTriangle -> glSurfaceView.setRenderer(TriangleRenderer(this))
-        R.id.btnPic -> glSurfaceView.setRenderer(PicRenderer(this))
-        R.id.btnSphere -> glSurfaceView.setRenderer(SphereRenderer(this))
-        R.id.learnHelloTriangle -> glSurfaceView.setRenderer(HelloTriangle(this))
+        R.id.btnTriangle -> {
+          glSurfaceView = GLSurfaceView(this).apply {
+            layoutParams = lp
+            setEGLContextClientVersion(3)
+          }
+          glSurfaceView.setRenderer(TriangleRenderer(this))
+        }
+        R.id.btnPic -> {
+          glSurfaceView = PicGLSurfaceView(this).apply {
+            layoutParams = FrameLayout.LayoutParams(
+              FrameLayout.LayoutParams.MATCH_PARENT,
+              FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            setEGLContextClientVersion(3)
+          }
+          glSurfaceView.setRenderer(PicRenderer(this))
+        }
+        R.id.btnSphere -> {
+          glSurfaceView = GLSurfaceView(this).apply {
+            layoutParams = lp
+            setEGLContextClientVersion(3)
+          }
+          glSurfaceView.setRenderer(SphereRenderer(this))
+        }
+        R.id.learnHelloTriangle -> {
+          glSurfaceView = GLSurfaceView(this).apply {
+            layoutParams = lp
+            setEGLContextClientVersion(3)
+          }
+          glSurfaceView.setRenderer(HelloTriangle(this))
+        }
         else -> return@click
       }
       binding.parent.addView(glSurfaceView)
@@ -54,6 +79,22 @@ class MainActivity : AppCompatActivity() {
       binding.parent.removeView(glSurfaceView)
     } else {
       super.onBackPressed()
+    }
+  }
+
+  override fun onResume() {
+    super.onResume()
+    val glSurfaceView = binding.parent.getChildAt(binding.parent.childCount - 1)
+    if (glSurfaceView is GLSurfaceView) {
+      glSurfaceView.onResume()
+    }
+  }
+
+  override fun onPause() {
+    super.onPause()
+    val glSurfaceView = binding.parent.getChildAt(binding.parent.childCount - 1)
+    if (glSurfaceView is GLSurfaceView) {
+      glSurfaceView.onPause()
     }
   }
 

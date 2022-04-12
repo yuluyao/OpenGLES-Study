@@ -4,6 +4,7 @@ import android.content.Context
 import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
+import android.util.Log
 import java.nio.FloatBuffer
 import java.nio.ShortBuffer
 import javax.microedition.khronos.egl.EGLConfig
@@ -162,7 +163,7 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
   fun updateMvpMatrix() {
     Matrix.setIdentityM(modelMatrix, 0)
     Matrix.rotateM(modelMatrix, 0, currentRotateDegree++, 0F, 1F, 0F)
-
+//    Log.d(TAG, "updateMvpMatrix: [currentRotateDegree: $currentRotateDegree]")
     val mTempMvMatrix = FloatArray(16)
     Matrix.setIdentityM(mTempMvMatrix, 0)
     Matrix.multiplyMM(mTempMvMatrix, 0, viewMatrix, 0, modelMatrix, 0)
