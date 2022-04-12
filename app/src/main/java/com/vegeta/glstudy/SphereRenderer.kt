@@ -34,7 +34,7 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
   private val mMvpMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
   private val projectionMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
   private val viewMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
-   val modelMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
+  private val modelMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
 
   override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
     GLES30.glViewport(0, 0, width, height)
