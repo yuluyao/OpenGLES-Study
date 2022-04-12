@@ -18,6 +18,8 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
   private var textureLoc = 0
   override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
     GLES30.glClearColor(0F, 0F, 0F, 1F)
+    GLES30.glEnable(GLES30.GL_DEPTH_TEST)
+
     mProgramHandle = Qutil.initShader(context, R.raw.sphere_vs, R.raw.sphere_fs)
     generateSphere(2F, 75, 150)
     //获取vPosition索引
@@ -64,7 +66,6 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
   private var indicesNum =0
 
   override fun onDrawFrame(gl: GL10?) {
-
     GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
 
     GLES30.glUseProgram(mProgramHandle)
