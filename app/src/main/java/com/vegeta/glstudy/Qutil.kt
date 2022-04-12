@@ -7,6 +7,10 @@ import android.opengl.GLUtils
 import android.util.Log
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.FloatBuffer
+import java.nio.ShortBuffer
 
 object Qutil {
   private val TAG = "glgl"
@@ -43,7 +47,7 @@ object Qutil {
     return buffer.toString()
   }
 
-  fun loadTexture(context: Context): IntArray {
+  fun loadTexture(context: Context,resId:Int): IntArray {
     val result = IntArray(3)
     val textureIds = IntArray(1)
     GLES30.glGenTextures(1, textureIds, 0)
@@ -57,7 +61,7 @@ object Qutil {
       inScaled = false
     }
     val bitmap =
-      BitmapFactory.decodeResource(context.resources, R.drawable.test_texture, options)
+      BitmapFactory.decodeResource(context.resources, resId, options)
         ?: run {
           GLES30.glDeleteTextures(1, textureIds, 0)
           Log.e(TAG, "加载bitmap错误")
@@ -87,4 +91,20 @@ object Qutil {
     return result
   }
 
+  fun array2Buffer(array: ShortArray): ShortBuffer {
+    val bb = ByteBuffer.allocateDirect(array.size * Short.SIZE_BYTES)
+    bb.order(ByteOrder.nativeOrder())
+    val buffer = bb.asShortBuffer()
+    buffer.put(array)
+    buffer.position(0)
+    return buffer
+  }
+  fun array2Buffer(array: FloatArray): FloatBuffer {
+    val bb = ByteBuffer.allocateDirect(array.size * Float.SIZE_BYTES)
+    bb.order(ByteOrder.nativeOrder())
+    val buffer = bb.asFloatBuffer()
+    buffer.put(array)
+    buffer.position(0)
+    return buffer
+  }
 }
