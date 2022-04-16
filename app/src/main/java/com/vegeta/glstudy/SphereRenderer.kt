@@ -36,9 +36,9 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     mvpMatrixLoc = GLES30.glGetUniformLocation(mProgramHandle, "mvpMatrix")
     textureLoc = GLES30.glGetUniformLocation(mProgramHandle, "u_Texture")
 
-//    val a = Qutil.loadTexture(context, R.drawable.earth)
+    val a = Qutil.loadTexture(context, R.drawable.earth)
 //    val a = Qutil.loadTexture(context, R.drawable.test_texture)
-    val a = Qutil.loadTexture(context, R.drawable.senery2)
+//    val a = Qutil.loadTexture(context, R.drawable.senery2)
     textureId = a[0]
 
     registerSensor()
@@ -58,35 +58,6 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     observeIn(ratio)
   }
 
-  /**
-   * 从球体外部观察
-   */
-  private fun observeOut(ratio: Float) {
-    Matrix.setLookAtM(
-      viewMatrix, 0,
-      0F, 0F, 75f,
-      0F, 0F, 0F,
-//      viewCenterVec3[0],viewCenterVec3[1],viewCenterVec3[2],
-      0F, 1F, 0F
-    )
-    Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 15f, 100f)
-  }
-
-  private val viewCenterVec3 = floatArrayOf(0f,0f,-1f)
-  /**
-   * 在球体内部观察
-   */
-  private fun observeIn(ratio: Float) {
-//    Matrix.setLookAtM(
-//      viewMatrix, 0,
-//      0F, 0F, 0f,
-////      0F, 0F, -2F,
-//      viewCenterVec3[0],viewCenterVec3[1],viewCenterVec3[2],
-//      0F, 1F, 0F
-//    )
-    Matrix.perspectiveM(projectionMatrix, 0, 60f, ratio, 1f, 10f)
-
-  }
 
   private var textureId = 0
 
@@ -190,19 +161,38 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     indicesNum = indices.size
   }
 
+  /**
+   * 从球体外部观察
+   */
+  private fun observeOut(ratio: Float) {
+//    Matrix.setLookAtM(
+//      viewMatrix, 0,
+//      0F, 0F, 75f,
+//      0F, 0F, 0F,
+//      0F, 1F, 0F
+//    )
+//    Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 15f, 100f)
+  }
+
+  /**
+   * 在球体内部观察
+   */
+  private fun observeIn(ratio: Float) {
+//    Matrix.setLookAtM(
+//      viewMatrix, 0,
+//      0F, 0F, 0f,
+////      0F, 0F, -2F,
+//      0F, 1F, 0F
+//    )
+    Matrix.perspectiveM(projectionMatrix, 0, 60f, ratio, 1f, 10f)
+
+  }
 
   var currentRotateDegree = 0F
   fun updateMvpMatrix() {
 //    Matrix.setIdentityM(modelMatrix, 0)
 //    Matrix.rotateM(modelMatrix, 0, currentRotateDegree++, 0F, 1F, 0F)
 //    Log.d(TAG, "updateMvpMatrix: [currentRotateDegree: $currentRotateDegree]")
-    Matrix.setLookAtM(
-      viewMatrix, 0,
-      0F, 0F, 0f,
-//      0F, 0F, -2F,
-      viewCenterVec3[0],viewCenterVec3[1],viewCenterVec3[2],
-      0F, 1F, 0F
-    )
     val mTempMvMatrix = FloatArray(16)
     Matrix.setIdentityM(mTempMvMatrix, 0)
     Matrix.multiplyMM(mTempMvMatrix, 0, viewMatrix, 0, modelMatrix, 0)
@@ -232,7 +222,7 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
 
         // Normalize the rotation vector if it's big enough to get the axis
         // 向量归一化
-        if (omegaMagnitude > 0.01) {
+        if (omegaMagnitude > 0.000001) {
           axisX /= omegaMagnitude
           axisY /= omegaMagnitude
           axisZ /= omegaMagnitude
@@ -264,7 +254,8 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
       val deltaRotationMatrix = FloatArray(16)
       SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector)
       Log.w(
-        TAG, "matrix:\n\t${deltaRotationMatrix[0]}, \t${deltaRotationMatrix[4]}, \t${deltaRotationMatrix[8]}, \t${deltaRotationMatrix[12]},\n" +
+        TAG,
+        "matrix:\n\t${deltaRotationMatrix[0]}, \t${deltaRotationMatrix[4]}, \t${deltaRotationMatrix[8]}, \t${deltaRotationMatrix[12]},\n" +
             "\t${deltaRotationMatrix[1]}, \t${deltaRotationMatrix[5]}, \t${deltaRotationMatrix[9]}, \t${deltaRotationMatrix[13]},\n" +
             "\t${deltaRotationMatrix[2]}, \t${deltaRotationMatrix[6]}, \t${deltaRotationMatrix[10]}, \t${deltaRotationMatrix[14]},\n" +
             "\t${deltaRotationMatrix[3]}, \t${deltaRotationMatrix[7]}, \t${deltaRotationMatrix[11]}, \t${deltaRotationMatrix[15]},"
@@ -272,12 +263,55 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
       // User code should concatenate the delta rotation we computed with the current
       // rotation in order to get the updated rotation.
       // rotationCurrent = rotationCurrent * deltaRotationMatrix;
-//      Matrix.multiplyMM(modelMatrix,0,modelMatrix,0,deltaRotationMatrix,0)
-      val vec4 = floatArrayOf(*viewCenterVec3,1f)//原观察点
-      Matrix.multiplyMV(vec4, 0, deltaRotationMatrix, 0, vec4, 0)//对观察点旋转
-      viewCenterVec3[0] = vec4[0]/ vec4[3]
-      viewCenterVec3[1] = vec4[1]/ vec4[3]
-      viewCenterVec3[2] = vec4[2]/ vec4[3]
+      Matrix.multiplyMM(viewMatrix,0,deltaRotationMatrix,0,viewMatrix,0)
+
+      // 直接用旋转矩阵乘向量
+//      var vx = viewCenterVec3[0]
+//      var vy = viewCenterVec3[1]
+//      var vz = viewCenterVec3[2]
+//      val vm = sqrt(vx * vx + vy * vy + vz * vz)
+//      vx /= vm
+//      vy /= vm
+//      vz /= vm
+//      val vec4 = floatArrayOf(vx, vy, vz, 1f)//原观察点
+//      Matrix.multiplyMV(vec4, 0, deltaRotationMatrix, 0, vec4, 0)//对观察点旋转
+//      viewCenterVec3[0] = vec4[0] / vec4[3]
+//      viewCenterVec3[1] = vec4[1] / vec4[3]
+//      viewCenterVec3[2] = vec4[2] / vec4[3]
+
+
+      // 手动计算，用四元数旋转一个向量，u -> u1
+//      var ux = viewCenterVec3[0]
+//      var uy = viewCenterVec3[1]
+//      var uz = viewCenterVec3[2]
+//      val q = deltaRotationVector
+//      val qx = q[0]
+//      val qy = q[2]
+//      val qz = q[2]
+//      val w = q[3]
+//      val temp1 = floatArrayOf(
+//        (2 * w * w - 1) * ux,
+//        (2 * w * w - 1) * uy,
+//        (2 * w * w - 1) * uz
+//      )
+//      val temp2 = floatArrayOf(
+//        2 * w * (uy * qz - uz * qy),
+//        2 * w * (uz * qx - ux * qz),
+//        2 * w * (ux * qy - uy * qx)
+//      )
+//      val temp3 = floatArrayOf(
+//        2 * (ux * qx + uy * qy + uz * qz) * qx,
+//        2 * (ux * qx + uy * qy + uz * qz) * qy,
+//        2 * (ux * qx + uy * qy + uz * qz) * qz
+//      )
+//      val u1 = floatArrayOf(
+//        temp1[0] + temp2[0] + temp3[0],
+//        temp1[1] + temp2[1] + temp3[1],
+//        temp1[2] + temp2[2] + temp3[2],
+//      )
+//      viewCenterVec3[0] = u1[0]
+//      viewCenterVec3[1] = u1[1]
+//      viewCenterVec3[2] = u1[2]
 
     }
 
