@@ -54,8 +54,8 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     GLES30.glViewport(0, 0, width, height)
     val ratio = width.toFloat() / height
 
-//    observeOut(ratio)
-    observeIn(ratio)
+    observeOut(ratio)
+//    observeIn(ratio)
   }
 
 
@@ -165,33 +165,33 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
    * 从球体外部观察
    */
   private fun observeOut(ratio: Float) {
-//    Matrix.setLookAtM(
-//      viewMatrix, 0,
-//      0F, 0F, 75f,
-//      0F, 0F, 0F,
-//      0F, 1F, 0F
-//    )
-//    Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 15f, 100f)
+    Matrix.setLookAtM(
+      viewMatrix, 0,
+      0F, 0F, 25f,
+      0F, 0F, 0F,
+      0F, 1F, 0F
+    )
+    Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 5f, 100f)
   }
 
   /**
    * 在球体内部观察
    */
   private fun observeIn(ratio: Float) {
-//    Matrix.setLookAtM(
-//      viewMatrix, 0,
-//      0F, 0F, 0f,
-////      0F, 0F, -2F,
-//      0F, 1F, 0F
-//    )
+    Matrix.setLookAtM(
+      viewMatrix, 0,
+      0F, 0F, 0f,
+      0F, 0F, -1F,
+      0F, 1F, 0F
+    )
     Matrix.perspectiveM(projectionMatrix, 0, 60f, ratio, 1f, 10f)
 
   }
 
   var currentRotateDegree = 0F
   fun updateMvpMatrix() {
-//    Matrix.setIdentityM(modelMatrix, 0)
-//    Matrix.rotateM(modelMatrix, 0, currentRotateDegree++, 0F, 1F, 0F)
+    Matrix.setIdentityM(modelMatrix, 0)
+    Matrix.rotateM(modelMatrix, 0, currentRotateDegree++, 0F, 1F, 0F)
 //    Log.d(TAG, "updateMvpMatrix: [currentRotateDegree: $currentRotateDegree]")
     val mTempMvMatrix = FloatArray(16)
     Matrix.setIdentityM(mTempMvMatrix, 0)
