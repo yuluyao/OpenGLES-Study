@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
           glSurfaceView.setRenderer(PicRenderer(this))
         }
         R.id.btnSphere -> {
-          glSurfaceView = GLSurfaceView(this).apply {
+          glSurfaceView = SphereSurfaceView(this).apply {
             layoutParams = lp
             setEGLContextClientVersion(3)
           }

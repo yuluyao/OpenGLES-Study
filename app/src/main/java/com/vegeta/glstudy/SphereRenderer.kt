@@ -1,14 +1,17 @@
 package com.vegeta.glstudy
 
 import android.content.Context
+import android.content.res.Resources
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.opengl.GLES30
+import android.opengl.GLES30.*
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
 import android.util.Log
+import android.view.MotionEvent
 import androidx.core.content.getSystemService
 import java.nio.FloatBuffer
 import java.nio.ShortBuffer
@@ -18,6 +21,52 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
+class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
+
+  private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
+  private val screenHeight = Resources.getSystem().displayMetrics.widthPixels
+
+  private val TOUCH_SCALE_FACTOR_X = 60f / screenWidth
+  private val TOUCH_SCALE_FACTOR_Y = TOUCH_SCALE_FACTOR_X * screenWidth / screenHeight
+  private var lastMoveX = 0f
+  private var lastMoveY = 0f
+
+
+  override fun onTouchEvent(event: MotionEvent): Boolean {
+    val x = event.x
+    val y = event.y
+    when (event.action) {
+      MotionEvent.ACTION_MOVE -> {
+        val dx = x - lastMoveX
+        val dy = y - lastMoveY
+        val angleX = dx * TOUCH_SCALE_FACTOR_X
+        val angleY = dy * TOUCH_SCALE_FACTOR_Y
+        Log.i(TAG, "angleX: $angleX, angleY: $angleY")
+        val rotateM = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
+        Matrix.rotateM(rotateM, 0, -angleX, 0f, 1f, 0f)
+        Matrix.rotateM(rotateM, 0, -angleY, 1f, 0f, 0f)
+        Matrix.multiplyMM(viewMatrix, 0, rotateM, 0, viewMatrix, 0)
+        lastMoveX = x
+        lastMoveY = y
+      }
+      MotionEvent.ACTION_DOWN -> {
+        lastMoveX = x
+        lastMoveY = y
+      }
+      MotionEvent.ACTION_UP -> {
+        lastMoveX = x
+        lastMoveY = y
+      }
+    }
+
+    return true
+  }
+
+
+}
+
+val viewMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
+
 class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
   private var mProgramHandle = 0
   private var vPositionLoc = 0
@@ -25,20 +74,21 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
   private var mvpMatrixLoc = 0
   private var textureLoc = 0
   override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-    GLES30.glClearColor(0F, 0F, 0F, 1F)
-    GLES30.glEnable(GLES30.GL_DEPTH_TEST)
+    glClearColor(0F, 0F, 0F, 1F)
+    glEnable(GL_DEPTH_TEST)
 
     mProgramHandle = Qutil.initShader(context, R.raw.sphere_vs, R.raw.sphere_fs)
     generateSphere(2F, 75, 150)
     //获取vPosition索引
-    vPositionLoc = GLES30.glGetAttribLocation(mProgramHandle, "a_Position")
-    texCoordLoc = GLES30.glGetAttribLocation(mProgramHandle, "a_TexCoord")
-    mvpMatrixLoc = GLES30.glGetUniformLocation(mProgramHandle, "mvpMatrix")
-    textureLoc = GLES30.glGetUniformLocation(mProgramHandle, "u_Texture")
+    vPositionLoc = glGetAttribLocation(mProgramHandle, "a_Position")
+    texCoordLoc = glGetAttribLocation(mProgramHandle, "a_TexCoord")
+    mvpMatrixLoc = glGetUniformLocation(mProgramHandle, "mvpMatrix")
+    textureLoc = glGetUniformLocation(mProgramHandle, "u_Texture")
 
-    val a = Qutil.loadTexture(context, R.drawable.earth)
-//    val a = Qutil.loadTexture(context, R.drawable.test_texture)
-//    val a = Qutil.loadTexture(context, R.drawable.senery2)
+//    val a = Qutil.loadTexture(context, R.drawable.earth)
+//    val a = Qutil.loadTexture(context, R.drawable.blackball)
+//    val a = Qutil.loadTexture(context, R.drawable.stroke_ball)
+    val a = Qutil.loadTexture(context, R.drawable.senery)
     textureId = a[0]
 
     registerSensor()
@@ -47,15 +97,14 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
 
   private val mMvpMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
   private val projectionMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
-  private val viewMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
   private val modelMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
 
   override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-    GLES30.glViewport(0, 0, width, height)
+    glViewport(0, 0, width, height)
     val ratio = width.toFloat() / height
 
-    observeOut(ratio)
-//    observeIn(ratio)
+//    observeOut(ratio)
+    observeIn(ratio)
   }
 
 
@@ -68,31 +117,31 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
   private var indicesNum = 0
 
   override fun onDrawFrame(gl: GL10?) {
-    GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT or GLES30.GL_DEPTH_BUFFER_BIT)
+    glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
 
-    GLES30.glUseProgram(mProgramHandle)
+    glUseProgram(mProgramHandle)
     //设置顶点数据
     vertexBuffer.position(0)
-    GLES30.glEnableVertexAttribArray(vPositionLoc)
-    GLES30.glVertexAttribPointer(vPositionLoc, 3, GLES30.GL_FLOAT, false, 0, vertexBuffer)
+    glEnableVertexAttribArray(vPositionLoc)
+    glVertexAttribPointer(vPositionLoc, 3, GL_FLOAT, false, 0, vertexBuffer)
 
     //设置纹理顶点数据
     texBuffer.position(0)
-    GLES30.glEnableVertexAttribArray(texCoordLoc)
-    GLES30.glVertexAttribPointer(texCoordLoc, 2, GLES30.GL_FLOAT, false, 0, texBuffer)
+    glEnableVertexAttribArray(texCoordLoc)
+    glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, false, 0, texBuffer)
 
     //设置纹理
-    GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
-    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureId)
-    GLES30.glUniform1i(textureLoc, 0)
+    glActiveTexture(GL_TEXTURE0)
+    glBindTexture(GL_TEXTURE_2D, textureId)
+    glUniform1i(textureLoc, 0)
 
     updateMvpMatrix()
-    GLES30.glUniformMatrix4fv(mvpMatrixLoc, 1, false, mMvpMatrix, 0)
+    glUniformMatrix4fv(mvpMatrixLoc, 1, false, mMvpMatrix, 0)
 
-    GLES30.glDrawElements(
-      GLES30.GL_TRIANGLES,
+    glDrawElements(
+      GL_TRIANGLES,
       indicesNum,
-      GLES30.GL_UNSIGNED_SHORT,
+      GL_UNSIGNED_SHORT,
       mIndicesBuffer
     )
   }
@@ -167,7 +216,7 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
   private fun observeOut(ratio: Float) {
     Matrix.setLookAtM(
       viewMatrix, 0,
-      0F, 0F, 25f,
+      0F, 15F, 25f,
       0F, 0F, 0F,
       0F, 1F, 0F
     )
@@ -190,8 +239,8 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
 
   var currentRotateDegree = 0F
   fun updateMvpMatrix() {
-    Matrix.setIdentityM(modelMatrix, 0)
-    Matrix.rotateM(modelMatrix, 0, currentRotateDegree++, 0F, 1F, 0F)
+//    Matrix.setIdentityM(modelMatrix, 0)
+//    Matrix.rotateM(modelMatrix, 0, currentRotateDegree++, 0F, 1F, 0F)
 //    Log.d(TAG, "updateMvpMatrix: [currentRotateDegree: $currentRotateDegree]")
     val mTempMvMatrix = FloatArray(16)
     Matrix.setIdentityM(mTempMvMatrix, 0)
@@ -213,12 +262,12 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
         var axisX = event.values[0] // x轴 角速度
         var axisY = event.values[1] // y轴 角速度
         var axisZ = event.values[2] // z轴 角速度
-        Log.v(TAG, "角速度: ($axisX, $axisY, $axisZ)")
+//        Log.v(TAG, "角速度: ($axisX, $axisY, $axisZ)")
 
         // Calculate the angular speed of the sample
         // 向量的模
         val omegaMagnitude = sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ)
-        Log.v(TAG, "  向量模: $omegaMagnitude")
+//        Log.v(TAG, "  向量模: $omegaMagnitude")
 
         // Normalize the rotation vector if it's big enough to get the axis
         // 向量归一化
@@ -229,7 +278,7 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
         } else {
           return
         }
-        Log.d(TAG, "    向量归一化: ($axisX, $axisY, $axisZ)")
+//        Log.d(TAG, "    向量归一化: ($axisX, $axisY, $axisZ)")
 
         // Integrate around this axis with the angular speed by the time step
         // in order to get a delta rotation from this sample over the time step
@@ -238,32 +287,32 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
         val thetaOverTwo = omegaMagnitude * dT / 2.0f
         val sinThetaOverTwo = sin(thetaOverTwo)
         val cosThetaOverTwo = cos(thetaOverTwo)
-        Log.d(TAG, "θ: $thetaOverTwo")
-        Log.d(TAG, "sin θ: $sinThetaOverTwo")
-        Log.d(TAG, "cos θ: $cosThetaOverTwo")
+//        Log.d(TAG, "θ: $thetaOverTwo")
+//        Log.d(TAG, "sin θ: $sinThetaOverTwo")
+//        Log.d(TAG, "cos θ: $cosThetaOverTwo")
         deltaRotationVector[0] = sinThetaOverTwo * axisX
         deltaRotationVector[1] = sinThetaOverTwo * axisY
         deltaRotationVector[2] = sinThetaOverTwo * axisZ
         deltaRotationVector[3] = cosThetaOverTwo
-        Log.i(
-          TAG,
-          "vec4: (${deltaRotationVector[0]},${deltaRotationVector[1]},${deltaRotationVector[2]},${deltaRotationVector[3]})"
-        )
+//        Log.i(
+//          TAG,
+//          "vec4: (${deltaRotationVector[0]},${deltaRotationVector[1]},${deltaRotationVector[2]},${deltaRotationVector[3]})"
+//        )
       }
       timestamp = event.timestamp
       val deltaRotationMatrix = FloatArray(16)
       SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector)
-      Log.w(
-        TAG,
-        "matrix:\n\t${deltaRotationMatrix[0]}, \t${deltaRotationMatrix[4]}, \t${deltaRotationMatrix[8]}, \t${deltaRotationMatrix[12]},\n" +
-            "\t${deltaRotationMatrix[1]}, \t${deltaRotationMatrix[5]}, \t${deltaRotationMatrix[9]}, \t${deltaRotationMatrix[13]},\n" +
-            "\t${deltaRotationMatrix[2]}, \t${deltaRotationMatrix[6]}, \t${deltaRotationMatrix[10]}, \t${deltaRotationMatrix[14]},\n" +
-            "\t${deltaRotationMatrix[3]}, \t${deltaRotationMatrix[7]}, \t${deltaRotationMatrix[11]}, \t${deltaRotationMatrix[15]},"
-      )
+//      Log.w(
+//        TAG,
+//        "matrix:\n\t${deltaRotationMatrix[0]}, \t${deltaRotationMatrix[4]}, \t${deltaRotationMatrix[8]}, \t${deltaRotationMatrix[12]},\n" +
+//            "\t${deltaRotationMatrix[1]}, \t${deltaRotationMatrix[5]}, \t${deltaRotationMatrix[9]}, \t${deltaRotationMatrix[13]},\n" +
+//            "\t${deltaRotationMatrix[2]}, \t${deltaRotationMatrix[6]}, \t${deltaRotationMatrix[10]}, \t${deltaRotationMatrix[14]},\n" +
+//            "\t${deltaRotationMatrix[3]}, \t${deltaRotationMatrix[7]}, \t${deltaRotationMatrix[11]}, \t${deltaRotationMatrix[15]},"
+//      )
       // User code should concatenate the delta rotation we computed with the current
       // rotation in order to get the updated rotation.
       // rotationCurrent = rotationCurrent * deltaRotationMatrix;
-      Matrix.multiplyMM(viewMatrix,0,deltaRotationMatrix,0,viewMatrix,0)
+      Matrix.multiplyMM(viewMatrix, 0, deltaRotationMatrix, 0, viewMatrix, 0)
 
       // 直接用旋转矩阵乘向量
 //      var vx = viewCenterVec3[0]
