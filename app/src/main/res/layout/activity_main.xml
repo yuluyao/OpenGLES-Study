@@ -35,8 +35,6 @@
           style="@style/Btn"
           android:text="LearnOpenGL - 你好三角形" />
 
-
-
     </LinearLayout>
 
 
