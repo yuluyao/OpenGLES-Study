@@ -6,7 +6,6 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.opengl.GLES30
 import android.opengl.GLES30.*
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
@@ -78,7 +77,7 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     glEnable(GL_DEPTH_TEST)
 
     mProgramHandle = Qutil.initShader(context, R.raw.sphere_vs, R.raw.sphere_fs)
-    generateSphere(2F, 75, 150)
+    generateSphere(4F, 75, 150)
     //获取vPosition索引
     vPositionLoc = glGetAttribLocation(mProgramHandle, "a_Position")
     texCoordLoc = glGetAttribLocation(mProgramHandle, "a_TexCoord")
@@ -138,6 +137,7 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     updateMvpMatrix()
     glUniformMatrix4fv(mvpMatrixLoc, 1, false, mMvpMatrix, 0)
 
+
     glDrawElements(
       GL_TRIANGLES,
       indicesNum,
@@ -160,8 +160,8 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     var z: Float
 
     val numPoint = (rings + 1) * (sectors + 1)
-    val vertexs = FloatArray(numPoint * 3)
-    val texcoords = FloatArray(numPoint * 2)
+    val vertexs = FloatArray(numPoint * 3)//3D坐标
+    val texcoords = FloatArray(numPoint * 2)//2D纹理
     val indices = ShortArray(numPoint * 6)
 
     var t = 0
@@ -170,11 +170,9 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     while (r < rings + 1) {
       s = 0
       while (s < sectors + 1) {
-        x =
-          (Math.cos((2f * PI * s.toFloat() * S).toDouble()) * Math.sin((PI * r.toFloat() * R).toDouble())).toFloat()
-        y = -Math.sin((-PI_2 + PI * r.toFloat() * R).toDouble()).toFloat()
-        z =
-          (Math.sin((2f * PI * s.toFloat() * S).toDouble()) * Math.sin((PI * r.toFloat() * R).toDouble())).toFloat()
+        x = cos((2f * PI * s.toFloat() * S)) * sin((PI * r.toFloat() * R))
+        y = -sin((-PI_2 + PI * r.toFloat() * R))
+        z = sin((2f * PI * s.toFloat() * S)) * sin((PI * r.toFloat() * R))
 
         texcoords[t++] = s * S
         texcoords[t++] = r * R
@@ -301,6 +299,9 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
       }
       timestamp = event.timestamp
       val deltaRotationMatrix = FloatArray(16)
+      for (i in deltaRotationVector.indices) {
+        deltaRotationVector[i] = deltaRotationVector[i] / 2
+      }
       SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector)
 //      Log.w(
 //        TAG,
