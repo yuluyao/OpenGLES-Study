@@ -20,7 +20,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
+open class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
 
   private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
   private val screenHeight = Resources.getSystem().displayMetrics.widthPixels
@@ -61,6 +61,153 @@ class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
     return true
   }
 
+  override fun onResume() {
+    super.onResume()
+    registerSensor()
+  }
+
+  override fun onPause() {
+    super.onPause()
+    unregisterSensor()
+  }
+
+  //<editor-fold desc="传感器">
+  private val sensorManager by lazy { context?.getSystemService<SensorManager>() }
+  private val sensorListener = object : SensorEventListener {
+    private val NS2S = 1.0f / 1000000000.0f;
+    private var timestamp = 0L;
+    private val deltaRotationVector = FloatArray(4)
+    override fun onSensorChanged(event: SensorEvent) {
+      // This time step's delta rotation to be multiplied by the current rotation
+      // after computing it from the gyro sample data.
+      if (timestamp != 0L) {
+        val dT = (event.timestamp - timestamp) * NS2S
+        var axisX = event.values[0] // x轴 角速度
+        var axisY = event.values[1] // y轴 角速度
+        var axisZ = event.values[2] // z轴 角速度
+//        Log.v(TAG, "角速度: ($axisX, $axisY, $axisZ)")
+
+        // Calculate the angular speed of the sample
+        // 向量的模
+        val omegaMagnitude = sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ)
+//        Log.v(TAG, "  向量模: $omegaMagnitude")
+
+        // Normalize the rotation vector if it's big enough to get the axis
+        // 向量归一化
+        if (omegaMagnitude > 0.000001) {
+          axisX /= omegaMagnitude
+          axisY /= omegaMagnitude
+          axisZ /= omegaMagnitude
+        } else {
+          return
+        }
+//        Log.d(TAG, "    向量归一化: ($axisX, $axisY, $axisZ)")
+
+        // Integrate around this axis with the angular speed by the time step
+        // in order to get a delta rotation from this sample over the time step
+        // We will convert this axis-angle representation of the delta rotation
+        // into a quaternion before turning it into the rotation matrix.
+        val thetaOverTwo = omegaMagnitude * dT / 2.0f
+        val sinThetaOverTwo = sin(thetaOverTwo)
+        val cosThetaOverTwo = cos(thetaOverTwo)
+//        Log.d(TAG, "θ: $thetaOverTwo")
+//        Log.d(TAG, "sin θ: $sinThetaOverTwo")
+//        Log.d(TAG, "cos θ: $cosThetaOverTwo")
+        deltaRotationVector[0] = sinThetaOverTwo * axisX
+        deltaRotationVector[1] = sinThetaOverTwo * axisY
+        deltaRotationVector[2] = sinThetaOverTwo * axisZ
+        deltaRotationVector[3] = cosThetaOverTwo
+//        Log.i(
+//          TAG,
+//          "vec4: (${deltaRotationVector[0]},${deltaRotationVector[1]},${deltaRotationVector[2]},${deltaRotationVector[3]})"
+//        )
+      }
+      timestamp = event.timestamp
+      val deltaRotationMatrix = FloatArray(16)
+      for (i in deltaRotationVector.indices) {
+        deltaRotationVector[i] = deltaRotationVector[i] * 0.85f
+      }
+      SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector)
+//      Log.w(
+//        TAG,
+//        "matrix:\n\t${deltaRotationMatrix[0]}, \t${deltaRotationMatrix[4]}, \t${deltaRotationMatrix[8]}, \t${deltaRotationMatrix[12]},\n" +
+//            "\t${deltaRotationMatrix[1]}, \t${deltaRotationMatrix[5]}, \t${deltaRotationMatrix[9]}, \t${deltaRotationMatrix[13]},\n" +
+//            "\t${deltaRotationMatrix[2]}, \t${deltaRotationMatrix[6]}, \t${deltaRotationMatrix[10]}, \t${deltaRotationMatrix[14]},\n" +
+//            "\t${deltaRotationMatrix[3]}, \t${deltaRotationMatrix[7]}, \t${deltaRotationMatrix[11]}, \t${deltaRotationMatrix[15]},"
+//      )
+      // User code should concatenate the delta rotation we computed with the current
+      // rotation in order to get the updated rotation.
+      // rotationCurrent = rotationCurrent * deltaRotationMatrix;
+      Matrix.multiplyMM(viewMatrix, 0, deltaRotationMatrix, 0, viewMatrix, 0)
+
+      // 直接用旋转矩阵乘向量
+//      var vx = viewCenterVec3[0]
+//      var vy = viewCenterVec3[1]
+//      var vz = viewCenterVec3[2]
+//      val vm = sqrt(vx * vx + vy * vy + vz * vz)
+//      vx /= vm
+//      vy /= vm
+//      vz /= vm
+//      val vec4 = floatArrayOf(vx, vy, vz, 1f)//原观察点
+//      Matrix.multiplyMV(vec4, 0, deltaRotationMatrix, 0, vec4, 0)//对观察点旋转
+//      viewCenterVec3[0] = vec4[0] / vec4[3]
+//      viewCenterVec3[1] = vec4[1] / vec4[3]
+//      viewCenterVec3[2] = vec4[2] / vec4[3]
+
+
+      // 手动计算，用四元数旋转一个向量，u -> u1
+//      var ux = viewCenterVec3[0]
+//      var uy = viewCenterVec3[1]
+//      var uz = viewCenterVec3[2]
+//      val q = deltaRotationVector
+//      val qx = q[0]
+//      val qy = q[2]
+//      val qz = q[2]
+//      val w = q[3]
+//      val temp1 = floatArrayOf(
+//        (2 * w * w - 1) * ux,
+//        (2 * w * w - 1) * uy,
+//        (2 * w * w - 1) * uz
+//      )
+//      val temp2 = floatArrayOf(
+//        2 * w * (uy * qz - uz * qy),
+//        2 * w * (uz * qx - ux * qz),
+//        2 * w * (ux * qy - uy * qx)
+//      )
+//      val temp3 = floatArrayOf(
+//        2 * (ux * qx + uy * qy + uz * qz) * qx,
+//        2 * (ux * qx + uy * qy + uz * qz) * qy,
+//        2 * (ux * qx + uy * qy + uz * qz) * qz
+//      )
+//      val u1 = floatArrayOf(
+//        temp1[0] + temp2[0] + temp3[0],
+//        temp1[1] + temp2[1] + temp3[1],
+//        temp1[2] + temp2[2] + temp3[2],
+//      )
+//      viewCenterVec3[0] = u1[0]
+//      viewCenterVec3[1] = u1[1]
+//      viewCenterVec3[2] = u1[2]
+
+    }
+
+
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+    }
+  }
+
+  private fun registerSensor() {
+    sensorManager?.registerListener(
+      sensorListener,
+      sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
+      SensorManager.SENSOR_DELAY_UI
+    )
+
+  }
+
+  private fun unregisterSensor() {
+    sensorManager?.unregisterListener(sensorListener)
+  }
+  //</editor-fold>
 
 }
 
@@ -90,7 +237,7 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     val a = Qutil.loadTexture(context, R.drawable.senery)
     textureId = a[0]
 
-    registerSensor()
+//    registerSensor()
   }
 
 
@@ -246,143 +393,6 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     Matrix.multiplyMM(mMvpMatrix, 0, projectionMatrix, 0, mTempMvMatrix, 0)
   }
 
-  //<editor-fold desc="传感器">
-  private val sensorManager by lazy { context.getSystemService<SensorManager>() }
-  private val sensorListener = object : SensorEventListener {
-    private val NS2S = 1.0f / 1000000000.0f;
-    private var timestamp = 0L;
-    private val deltaRotationVector = FloatArray(4)
-    override fun onSensorChanged(event: SensorEvent) {
-      // This time step's delta rotation to be multiplied by the current rotation
-      // after computing it from the gyro sample data.
-      if (timestamp != 0L) {
-        val dT = (event.timestamp - timestamp) * NS2S
-        var axisX = event.values[0] // x轴 角速度
-        var axisY = event.values[1] // y轴 角速度
-        var axisZ = event.values[2] // z轴 角速度
-//        Log.v(TAG, "角速度: ($axisX, $axisY, $axisZ)")
-
-        // Calculate the angular speed of the sample
-        // 向量的模
-        val omegaMagnitude = sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ)
-//        Log.v(TAG, "  向量模: $omegaMagnitude")
-
-        // Normalize the rotation vector if it's big enough to get the axis
-        // 向量归一化
-        if (omegaMagnitude > 0.000001) {
-          axisX /= omegaMagnitude
-          axisY /= omegaMagnitude
-          axisZ /= omegaMagnitude
-        } else {
-          return
-        }
-//        Log.d(TAG, "    向量归一化: ($axisX, $axisY, $axisZ)")
-
-        // Integrate around this axis with the angular speed by the time step
-        // in order to get a delta rotation from this sample over the time step
-        // We will convert this axis-angle representation of the delta rotation
-        // into a quaternion before turning it into the rotation matrix.
-        val thetaOverTwo = omegaMagnitude * dT / 2.0f
-        val sinThetaOverTwo = sin(thetaOverTwo)
-        val cosThetaOverTwo = cos(thetaOverTwo)
-//        Log.d(TAG, "θ: $thetaOverTwo")
-//        Log.d(TAG, "sin θ: $sinThetaOverTwo")
-//        Log.d(TAG, "cos θ: $cosThetaOverTwo")
-        deltaRotationVector[0] = sinThetaOverTwo * axisX
-        deltaRotationVector[1] = sinThetaOverTwo * axisY
-        deltaRotationVector[2] = sinThetaOverTwo * axisZ
-        deltaRotationVector[3] = cosThetaOverTwo
-//        Log.i(
-//          TAG,
-//          "vec4: (${deltaRotationVector[0]},${deltaRotationVector[1]},${deltaRotationVector[2]},${deltaRotationVector[3]})"
-//        )
-      }
-      timestamp = event.timestamp
-      val deltaRotationMatrix = FloatArray(16)
-      for (i in deltaRotationVector.indices) {
-        deltaRotationVector[i] = deltaRotationVector[i] / 2
-      }
-      SensorManager.getRotationMatrixFromVector(deltaRotationMatrix, deltaRotationVector)
-//      Log.w(
-//        TAG,
-//        "matrix:\n\t${deltaRotationMatrix[0]}, \t${deltaRotationMatrix[4]}, \t${deltaRotationMatrix[8]}, \t${deltaRotationMatrix[12]},\n" +
-//            "\t${deltaRotationMatrix[1]}, \t${deltaRotationMatrix[5]}, \t${deltaRotationMatrix[9]}, \t${deltaRotationMatrix[13]},\n" +
-//            "\t${deltaRotationMatrix[2]}, \t${deltaRotationMatrix[6]}, \t${deltaRotationMatrix[10]}, \t${deltaRotationMatrix[14]},\n" +
-//            "\t${deltaRotationMatrix[3]}, \t${deltaRotationMatrix[7]}, \t${deltaRotationMatrix[11]}, \t${deltaRotationMatrix[15]},"
-//      )
-      // User code should concatenate the delta rotation we computed with the current
-      // rotation in order to get the updated rotation.
-      // rotationCurrent = rotationCurrent * deltaRotationMatrix;
-      Matrix.multiplyMM(viewMatrix, 0, deltaRotationMatrix, 0, viewMatrix, 0)
-
-      // 直接用旋转矩阵乘向量
-//      var vx = viewCenterVec3[0]
-//      var vy = viewCenterVec3[1]
-//      var vz = viewCenterVec3[2]
-//      val vm = sqrt(vx * vx + vy * vy + vz * vz)
-//      vx /= vm
-//      vy /= vm
-//      vz /= vm
-//      val vec4 = floatArrayOf(vx, vy, vz, 1f)//原观察点
-//      Matrix.multiplyMV(vec4, 0, deltaRotationMatrix, 0, vec4, 0)//对观察点旋转
-//      viewCenterVec3[0] = vec4[0] / vec4[3]
-//      viewCenterVec3[1] = vec4[1] / vec4[3]
-//      viewCenterVec3[2] = vec4[2] / vec4[3]
-
-
-      // 手动计算，用四元数旋转一个向量，u -> u1
-//      var ux = viewCenterVec3[0]
-//      var uy = viewCenterVec3[1]
-//      var uz = viewCenterVec3[2]
-//      val q = deltaRotationVector
-//      val qx = q[0]
-//      val qy = q[2]
-//      val qz = q[2]
-//      val w = q[3]
-//      val temp1 = floatArrayOf(
-//        (2 * w * w - 1) * ux,
-//        (2 * w * w - 1) * uy,
-//        (2 * w * w - 1) * uz
-//      )
-//      val temp2 = floatArrayOf(
-//        2 * w * (uy * qz - uz * qy),
-//        2 * w * (uz * qx - ux * qz),
-//        2 * w * (ux * qy - uy * qx)
-//      )
-//      val temp3 = floatArrayOf(
-//        2 * (ux * qx + uy * qy + uz * qz) * qx,
-//        2 * (ux * qx + uy * qy + uz * qz) * qy,
-//        2 * (ux * qx + uy * qy + uz * qz) * qz
-//      )
-//      val u1 = floatArrayOf(
-//        temp1[0] + temp2[0] + temp3[0],
-//        temp1[1] + temp2[1] + temp3[1],
-//        temp1[2] + temp2[2] + temp3[2],
-//      )
-//      viewCenterVec3[0] = u1[0]
-//      viewCenterVec3[1] = u1[1]
-//      viewCenterVec3[2] = u1[2]
-
-    }
-
-
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-    }
-  }
-
-  private fun registerSensor() {
-    sensorManager?.registerListener(
-      sensorListener,
-      sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
-      SensorManager.SENSOR_DELAY_UI
-    )
-
-  }
-
-  private fun unregisterSensor() {
-    sensorManager?.unregisterListener(sensorListener)
-  }
-  //</editor-fold>
 
 }
 
@@ -435,3 +445,4 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
 //  override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
 //  }
 //}
+

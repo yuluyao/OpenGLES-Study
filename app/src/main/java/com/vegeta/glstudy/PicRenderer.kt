@@ -6,7 +6,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.opengl.GLES30
+import android.opengl.GLES30.*
 import android.opengl.GLSurfaceView
 import android.opengl.GLUtils
 import android.opengl.Matrix
@@ -176,7 +176,7 @@ class PicRenderer(val context: Context) : GLSurfaceView.Renderer {
 
   private var glProgram: Int = 0
   override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
-    GLES30.glClearColor(0.0f, 0.0f, 0.0f, 1f)
+    glClearColor(0.0f, 0.0f, 0.0f, 1f)
     glProgram = Qutil.initShader(context, R.raw.pic_vs, R.raw.pic_fs)
 //    textureId = loadTexture()
     val a = Qutil.loadTexture(context, R.drawable.test_texture)
@@ -193,7 +193,7 @@ class PicRenderer(val context: Context) : GLSurfaceView.Renderer {
   private val bitmapSize = IntArray(2)
 
   override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
-    GLES30.glViewport(0, 0, width, height)
+    glViewport(0, 0, width, height)
     Log.i(TAG, "[screen size] width: $width, height: $height")
     Log.i(TAG, "[bitmap size] width: ${bitmapSize[0]}, height: ${bitmapSize[1]}")
     val ratio: Float = width.toFloat() / height.toFloat()
@@ -210,59 +210,59 @@ class PicRenderer(val context: Context) : GLSurfaceView.Renderer {
 
 
   override fun onDrawFrame(gl: GL10) {
-    GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT)
+    glClear(GL_COLOR_BUFFER_BIT)
 
     // 顶点坐标数据
-    val a_Position = GLES30.glGetAttribLocation(glProgram, "a_Position")
-    GLES30.glEnableVertexAttribArray(a_Position);
-    GLES30.glVertexAttribPointer(
+    val a_Position = glGetAttribLocation(glProgram, "a_Position")
+    glEnableVertexAttribArray(a_Position);
+    glVertexAttribPointer(
       a_Position,
       3,
-      GLES30.GL_FLOAT,
+      GL_FLOAT,
       false,
       Float.SIZE_BYTES * 3,
       vertexBuffer
     )
 
     // 纹理数据
-    val a_TextureCoord = GLES30.glGetAttribLocation(glProgram, "a_TextureCoord")
-    GLES30.glEnableVertexAttribArray(a_TextureCoord)
-    GLES30.glVertexAttribPointer(
+    val a_TextureCoord = glGetAttribLocation(glProgram, "a_TextureCoord")
+    glEnableVertexAttribArray(a_TextureCoord)
+    glVertexAttribPointer(
       a_TextureCoord,
       2,
-      GLES30.GL_FLOAT,
+      GL_FLOAT,
       false,
       Float.SIZE_BYTES * 2,
       texBuffer
     )
     // 激活纹理
-    GLES30.glActiveTexture(GLES30.GL_TEXTURE0)
-    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureId)
+    glActiveTexture(GL_TEXTURE0)
+    glBindTexture(GL_TEXTURE_2D, textureId)
 
     // 矩阵
     Matrix.multiplyMM(mvpMatrix, 0, projMatrix, 0, viewMatrix, 0)
     Matrix.multiplyMM(mvpMatrix, 0, mvpMatrix, 0, modelMatrix, 0)
-    val u_MvpMatrix = GLES30.glGetUniformLocation(glProgram, "u_MvpMatrix")
-    GLES30.glUniformMatrix4fv(u_MvpMatrix, 1, false, mvpMatrix, 0)
+    val u_MvpMatrix = glGetUniformLocation(glProgram, "u_MvpMatrix")
+    glUniformMatrix4fv(u_MvpMatrix, 1, false, mvpMatrix, 0)
 
 
-    GLES30.glDrawElements(
-      GLES30.GL_TRIANGLES,
+    glDrawElements(
+      GL_TRIANGLES,
       vertexIndex.size,
-      GLES30.GL_UNSIGNED_INT,
+      GL_UNSIGNED_INT,
       vertexIndexBuffer
     )
 
     //禁止顶点数组的句柄
-    GLES30.glDisableVertexAttribArray(a_Position);
-    GLES30.glDisableVertexAttribArray(a_TextureCoord);
+    glDisableVertexAttribArray(a_Position);
+    glDisableVertexAttribArray(a_TextureCoord);
   }
 
   private val TAG = "glgl"
 
   private fun loadTexture(): Int {
     val textureIds = IntArray(1)
-    GLES30.glGenTextures(1, textureIds, 0)
+    glGenTextures(1, textureIds, 0)
     if (textureIds[0] == 0) {
       Log.e(TAG, "create texture object failed!")
       return 0
@@ -274,28 +274,28 @@ class PicRenderer(val context: Context) : GLSurfaceView.Renderer {
     val bitmap =
       BitmapFactory.decodeResource(context.resources, R.drawable.test_texture, options)
         ?: run {
-          GLES30.glDeleteTextures(1, textureIds, 0)
+          glDeleteTextures(1, textureIds, 0)
           Log.e(TAG, "加载bitmap错误")
           return 0
         }
     // 绑定纹理
-    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, textureIds[0])
+    glBindTexture(GL_TEXTURE_2D, textureIds[0])
     // 设置纹理过滤参数
-    GLES30.glTexParameteri(
-      GLES30.GL_TEXTURE_2D,
-      GLES30.GL_TEXTURE_MIN_FILTER,
-      GLES30.GL_LINEAR_MIPMAP_LINEAR
+    glTexParameteri(
+      GL_TEXTURE_2D,
+      GL_TEXTURE_MIN_FILTER,
+      GL_LINEAR_MIPMAP_LINEAR
     )
-    GLES30.glTexParameteri(GLES30.GL_TEXTURE_2D, GLES30.GL_TEXTURE_MAG_FILTER, GLES30.GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
     // 加载bitmap到纹理
-    GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, bitmap, 0)
+    GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0)
     // 生成mipmap
-    GLES30.glGenerateMipmap(GLES30.GL_TEXTURE_2D)
+    glGenerateMipmap(GL_TEXTURE_2D)
 
     // 释放Bitmap
     bitmap.recycle()
     // 解绑
-    GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0)
+    glBindTexture(GL_TEXTURE_2D, 0)
     return textureIds[0]
   }
 
