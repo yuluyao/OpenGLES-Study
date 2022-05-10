@@ -179,7 +179,7 @@ class PicRenderer(val context: Context) : GLSurfaceView.Renderer {
     glClearColor(0.0f, 0.0f, 0.0f, 1f)
     glProgram = Qutil.initShader(context, R.raw.pic_vs, R.raw.pic_fs)
 //    textureId = loadTexture()
-    val a = Qutil.loadTexture(context, R.drawable.test_texture)
+    val a = Qutil.loadTexture(context,"no file", R.drawable.test_texture)
     textureId = a[0]
     bitmapSize[0] = a[1]
     bitmapSize[1] = a[2]

@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
         FrameLayout.LayoutParams.MATCH_PARENT
       )
       val glSurfaceView: GLSurfaceView
-//        renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+//      glSurfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
       when (view.id) {
         R.id.btnTriangle -> {
           glSurfaceView = GLSurfaceView(this).apply {
@@ -49,7 +49,8 @@ class MainActivity : AppCompatActivity() {
             layoutParams = lp
             setEGLContextClientVersion(3)
           }
-          glSurfaceView.setRenderer(SphereRenderer(this))
+          glSurfaceView.setRenderer(SphereRenderer(this,"no local file"))
+          glSurfaceView.renderMode= GLSurfaceView.RENDERMODE_WHEN_DIRTY
         }
         R.id.learnHelloTriangle -> {
           glSurfaceView = GLSurfaceView(this).apply {

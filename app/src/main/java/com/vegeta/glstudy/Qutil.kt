@@ -13,8 +13,9 @@ import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.nio.ShortBuffer
 
+val TAG = "glgl"
+
 object Qutil {
-  private val TAG = "glgl"
 
   fun initShader(context: Context, vsResId: Int, fsResId: Int): Int {
     val vertexShader: Int = glCreateShader(GL_VERTEX_SHADER).also { shader ->
@@ -48,7 +49,7 @@ object Qutil {
     return buffer.toString()
   }
 
-  fun loadTexture(context: Context, resId: Int): IntArray {
+  fun loadTexture(context: Context, path: String, resId: Int = 0): IntArray {
     val result = IntArray(3)
     val textureIds = IntArray(1)
     glGenTextures(1, textureIds, 0)
@@ -58,18 +59,26 @@ object Qutil {
     }
     result[0] = textureIds[0]
 
+    var inSample = 1
+    val r = detectSize(context, path, resId)
+    /*图片不能展示，有可能是宽或高超过了4096导致的，而不是这种方式来判断，待验证*/
+    while (r[0] * r[1] * 4 / inSample > 1024 * 1024 * 64) {
+      inSample = inSample.shl(1)
+    }
+
     val options = BitmapFactory.Options().apply {
       inScaled = false
-      inSampleSize = 2
-
+      inSampleSize = inSample
     }
-    val bitmap =
+    val bitmap = if (resId != 0) {
       BitmapFactory.decodeResource(context.resources, resId, options)
-        ?: run {
-          glDeleteTextures(1, textureIds, 0)
-          Log.e(TAG, "加载bitmap错误")
-          return result
-        }
+    } else {
+      BitmapFactory.decodeFile(path, options)
+    } ?: run {
+      glDeleteTextures(1, textureIds, 0)
+      Log.e(TAG, "加载bitmap错误")
+      return result
+    }
     // 绑定纹理
     glBindTexture(GL_TEXTURE_2D, textureIds[0])
     // 设置纹理过滤参数
@@ -88,7 +97,7 @@ object Qutil {
     result[2] = bitmap.height
     Log.i(
       TAG,
-      "bitmap: [memory: ${bitmap.byteCount}, width: ${bitmap.width}, height: ${bitmap.height}]"
+      "bitmap: [memory: unknown, width: ${bitmap.width}, height: ${bitmap.height}]"
     )
     // 释放Bitmap
     bitmap.recycle()
@@ -96,6 +105,20 @@ object Qutil {
     glBindTexture(GL_TEXTURE_2D, 0)
 
     return result
+  }
+
+  private fun detectSize(context: Context, path: String, resId: Int = 0): IntArray {
+    val options = BitmapFactory.Options().apply {
+      inJustDecodeBounds = true
+    }
+    val bitmap = if (resId != 0) {
+      BitmapFactory.decodeResource(context.resources, resId, options)
+    } else {
+      BitmapFactory.decodeFile(path, options)
+    }
+    Log.i(TAG, "detectSize: (${options.outWidth}, ${options.outHeight})")
+    return intArrayOf(options.outWidth, options.outHeight)
+//    return intArrayOf(0, 0)
   }
 
   fun array2Buffer(array: ShortArray): ShortBuffer {

@@ -1,3 +1,3 @@
 package com.vegeta.glstudy
 
-const val TAG="glgl"
+//const val TAG="glgl"

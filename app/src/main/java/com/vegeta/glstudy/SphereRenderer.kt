@@ -9,6 +9,7 @@ import android.hardware.SensorManager
 import android.opengl.GLES30.*
 import android.opengl.GLSurfaceView
 import android.opengl.Matrix
+import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import androidx.core.content.getSystemService
@@ -20,7 +21,8 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-open class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
+open class SphereSurfaceView : GLSurfaceView {
+
 
   private val screenWidth = Resources.getSystem().displayMetrics.widthPixels
   private val screenHeight = Resources.getSystem().displayMetrics.widthPixels
@@ -29,6 +31,9 @@ open class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
   private val TOUCH_SCALE_FACTOR_Y = TOUCH_SCALE_FACTOR_X * screenWidth / screenHeight
   private var lastMoveX = 0f
   private var lastMoveY = 0f
+
+  constructor(context: Context?) : super(context)
+  constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
 
 
   override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -45,6 +50,7 @@ open class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
         Matrix.rotateM(rotateM, 0, -angleX, 0f, 1f, 0f)
         Matrix.rotateM(rotateM, 0, -angleY, 1f, 0f, 0f)
         Matrix.multiplyMM(viewMatrix, 0, rotateM, 0, viewMatrix, 0)
+        requestRender()
         lastMoveX = x
         lastMoveY = y
       }
@@ -72,10 +78,12 @@ open class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
   }
 
   //<editor-fold desc="传感器">
-  private val sensorManager by lazy { context?.getSystemService<SensorManager>() }
+  private val sensorManager by lazy {
+    context?.getSystemService<SensorManager>()
+  }
   private val sensorListener = object : SensorEventListener {
-    private val NS2S = 1.0f / 1000000000.0f;
-    private var timestamp = 0L;
+    private val NS2S = 1.0f / 1000000000.0f
+    private var timestamp = 0L
     private val deltaRotationVector = FloatArray(4)
     override fun onSensorChanged(event: SensorEvent) {
       // This time step's delta rotation to be multiplied by the current rotation
@@ -101,7 +109,7 @@ open class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
         } else {
           return
         }
-//        Log.d(TAG, "    向量归一化: ($axisX, $axisY, $axisZ)")
+        Log.v(TAG, "    向量归一化: ($axisX, $axisY, $axisZ)")
 
         // Integrate around this axis with the angular speed by the time step
         // in order to get a delta rotation from this sample over the time step
@@ -139,21 +147,7 @@ open class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
       // rotation in order to get the updated rotation.
       // rotationCurrent = rotationCurrent * deltaRotationMatrix;
       Matrix.multiplyMM(viewMatrix, 0, deltaRotationMatrix, 0, viewMatrix, 0)
-
-      // 直接用旋转矩阵乘向量
-//      var vx = viewCenterVec3[0]
-//      var vy = viewCenterVec3[1]
-//      var vz = viewCenterVec3[2]
-//      val vm = sqrt(vx * vx + vy * vy + vz * vz)
-//      vx /= vm
-//      vy /= vm
-//      vz /= vm
-//      val vec4 = floatArrayOf(vx, vy, vz, 1f)//原观察点
-//      Matrix.multiplyMV(vec4, 0, deltaRotationMatrix, 0, vec4, 0)//对观察点旋转
-//      viewCenterVec3[0] = vec4[0] / vec4[3]
-//      viewCenterVec3[1] = vec4[1] / vec4[3]
-//      viewCenterVec3[2] = vec4[2] / vec4[3]
-
+      requestRender()
 
       // 手动计算，用四元数旋转一个向量，u -> u1
 //      var ux = viewCenterVec3[0]
@@ -199,9 +193,8 @@ open class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
     sensorManager?.registerListener(
       sensorListener,
       sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
-      SensorManager.SENSOR_DELAY_UI
+      SensorManager.SENSOR_DELAY_NORMAL
     )
-
   }
 
   private fun unregisterSensor() {
@@ -213,7 +206,7 @@ open class SphereSurfaceView(context: Context?) : GLSurfaceView(context) {
 
 val viewMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
 
-class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
+class SphereRenderer(val context: Context, val path: String) : GLSurfaceView.Renderer {
   private var mProgramHandle = 0
   private var vPositionLoc = 0
   private var texCoordLoc = 0
@@ -224,20 +217,15 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
     glEnable(GL_DEPTH_TEST)
 
     mProgramHandle = Qutil.initShader(context, R.raw.sphere_vs, R.raw.sphere_fs)
-    generateSphere(4F, 75, 150)
+    generateSphere(2F, 128, 256)
     //获取vPosition索引
     vPositionLoc = glGetAttribLocation(mProgramHandle, "a_Position")
     texCoordLoc = glGetAttribLocation(mProgramHandle, "a_TexCoord")
     mvpMatrixLoc = glGetUniformLocation(mProgramHandle, "mvpMatrix")
     textureLoc = glGetUniformLocation(mProgramHandle, "u_Texture")
 
-//    val a = Qutil.loadTexture(context, R.drawable.earth)
-//    val a = Qutil.loadTexture(context, R.drawable.blackball)
-//    val a = Qutil.loadTexture(context, R.drawable.stroke_ball)
-    val a = Qutil.loadTexture(context, R.drawable.senery)
+    val a = Qutil.loadTexture(context, path, R.drawable.senery)
     textureId = a[0]
-
-//    registerSensor()
   }
 
 
@@ -378,7 +366,7 @@ class SphereRenderer(val context: Context) : GLSurfaceView.Renderer {
       0F, 0F, -1F,
       0F, 1F, 0F
     )
-    Matrix.perspectiveM(projectionMatrix, 0, 60f, ratio, 1f, 10f)
+    Matrix.perspectiveM(projectionMatrix, 0, 75f, ratio, 1f, 10f)
 
   }
 
