@@ -102,7 +102,7 @@ open class SphereSurfaceView : GLSurfaceView {
 
         // Normalize the rotation vector if it's big enough to get the axis
         // 向量归一化
-        if (omegaMagnitude > 0.000001) {
+        if (omegaMagnitude > 0.01) {
           axisX /= omegaMagnitude
           axisY /= omegaMagnitude
           axisZ /= omegaMagnitude
@@ -147,41 +147,18 @@ open class SphereSurfaceView : GLSurfaceView {
       // rotation in order to get the updated rotation.
       // rotationCurrent = rotationCurrent * deltaRotationMatrix;
       Matrix.multiplyMM(viewMatrix, 0, deltaRotationMatrix, 0, viewMatrix, 0)
+      logMatrix(viewMatrix, "viewMatrix")
       requestRender()
 
-      // 手动计算，用四元数旋转一个向量，u -> u1
-//      var ux = viewCenterVec3[0]
-//      var uy = viewCenterVec3[1]
-//      var uz = viewCenterVec3[2]
-//      val q = deltaRotationVector
-//      val qx = q[0]
-//      val qy = q[2]
-//      val qz = q[2]
-//      val w = q[3]
-//      val temp1 = floatArrayOf(
-//        (2 * w * w - 1) * ux,
-//        (2 * w * w - 1) * uy,
-//        (2 * w * w - 1) * uz
+//      val f4 = {f:Float-> String.format("% .4f",f)}
+//      val info = viewMatrix.map { f4(it) }
+//      Log.w(
+//        TAG,
+//        "matrix:\n\t${info[0]}, \t${info[4]}, \t${info[8]}, \t${info[12]},\n" +
+//            "\t${info[1]}, \t${info[5]}, \t${info[9]}, \t${info[13]},\n" +
+//            "\t${info[2]}, \t${info[6]}, \t${info[10]}, \t${info[14]},\n" +
+//            "\t${info[3]}, \t${info[7]}, \t${info[11]}, \t${info[15]},"
 //      )
-//      val temp2 = floatArrayOf(
-//        2 * w * (uy * qz - uz * qy),
-//        2 * w * (uz * qx - ux * qz),
-//        2 * w * (ux * qy - uy * qx)
-//      )
-//      val temp3 = floatArrayOf(
-//        2 * (ux * qx + uy * qy + uz * qz) * qx,
-//        2 * (ux * qx + uy * qy + uz * qz) * qy,
-//        2 * (ux * qx + uy * qy + uz * qz) * qz
-//      )
-//      val u1 = floatArrayOf(
-//        temp1[0] + temp2[0] + temp3[0],
-//        temp1[1] + temp2[1] + temp3[1],
-//        temp1[2] + temp2[2] + temp3[2],
-//      )
-//      viewCenterVec3[0] = u1[0]
-//      viewCenterVec3[1] = u1[1]
-//      viewCenterVec3[2] = u1[2]
-
     }
 
 
@@ -206,6 +183,18 @@ open class SphereSurfaceView : GLSurfaceView {
 
 val viewMatrix = FloatArray(16).apply { Matrix.setIdentityM(this, 0) }
 
+private fun logMatrix(m: FloatArray, prefix: String = "matrix") {
+  val f4 = { f: Float -> String.format("% .4f", f) }
+  val info = m.map { f4(it) }
+  Log.w(
+    TAG,
+    "$prefix:\n\t${info[0]}, \t${info[4]}, \t${info[8]}, \t${info[12]},\n" +
+        "\t${info[1]}, \t${info[5]}, \t${info[9]}, \t${info[13]},\n" +
+        "\t${info[2]}, \t${info[6]}, \t${info[10]}, \t${info[14]},\n" +
+        "\t${info[3]}, \t${info[7]}, \t${info[11]}, \t${info[15]},"
+  )
+}
+
 class SphereRenderer(val context: Context, val path: String) : GLSurfaceView.Renderer {
   private var mProgramHandle = 0
   private var vPositionLoc = 0
@@ -217,7 +206,7 @@ class SphereRenderer(val context: Context, val path: String) : GLSurfaceView.Ren
     glEnable(GL_DEPTH_TEST)
 
     mProgramHandle = Qutil.initShader(context, R.raw.sphere_vs, R.raw.sphere_fs)
-    generateSphere(2F, 128, 256)
+    generateSphere(4F, 128, 256)
     //获取vPosition索引
     vPositionLoc = glGetAttribLocation(mProgramHandle, "a_Position")
     texCoordLoc = glGetAttribLocation(mProgramHandle, "a_TexCoord")
@@ -346,15 +335,15 @@ class SphereRenderer(val context: Context, val path: String) : GLSurfaceView.Ren
   /**
    * 从球体外部观察
    */
-  private fun observeOut(ratio: Float) {
-    Matrix.setLookAtM(
-      viewMatrix, 0,
-      0F, 15F, 25f,
-      0F, 0F, 0F,
-      0F, 1F, 0F
-    )
-    Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 5f, 100f)
-  }
+//  private fun observeOut(ratio: Float) {
+//    Matrix.setLookAtM(
+//      viewMatrix, 0,
+//      0F, 15F, 25f,
+//      0F, 0F, 0F,
+//      0F, 1F, 0F
+//    )
+//    Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 5f, 100f)
+//  }
 
   /**
    * 在球体内部观察
@@ -363,10 +352,12 @@ class SphereRenderer(val context: Context, val path: String) : GLSurfaceView.Ren
     Matrix.setLookAtM(
       viewMatrix, 0,
       0F, 0F, 0f,
-      0F, 0F, -1F,
+      4F, 0F, 0F,
       0F, 1F, 0F
     )
-    Matrix.perspectiveM(projectionMatrix, 0, 75f, ratio, 1f, 10f)
+    logMatrix(viewMatrix, "init viewMatrix")
+//    Matrix.perspectiveM(projectionMatrix, 0, 80f, ratio, 1f, 10f)
+    Matrix.frustumM(projectionMatrix, 0, -ratio, ratio, -1f, 1f, 0.8f, 10f)
 
   }
 
