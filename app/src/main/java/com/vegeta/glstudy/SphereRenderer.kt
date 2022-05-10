@@ -88,49 +88,50 @@ open class SphereSurfaceView : GLSurfaceView {
     override fun onSensorChanged(event: SensorEvent) {
       // This time step's delta rotation to be multiplied by the current rotation
       // after computing it from the gyro sample data.
-      if (timestamp != 0L) {
-        val dT = (event.timestamp - timestamp) * NS2S
-        var axisX = event.values[0] // x轴 角速度
-        var axisY = event.values[1] // y轴 角速度
-        var axisZ = event.values[2] // z轴 角速度
+//      if (timestamp != 0L) {
+      val dT = (event.timestamp - timestamp) * NS2S
+      timestamp = event.timestamp
+
+      var axisX = event.values[0] // x轴 角速度
+      var axisY = event.values[1] // y轴 角速度
+      var axisZ = event.values[2] // z轴 角速度
 //        Log.v(TAG, "角速度: ($axisX, $axisY, $axisZ)")
 
-        // Calculate the angular speed of the sample
-        // 向量的模
-        val omegaMagnitude = sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ)
+      // Calculate the angular speed of the sample
+      // 向量的模
+      val omegaMagnitude = sqrt(axisX * axisX + axisY * axisY + axisZ * axisZ)
 //        Log.v(TAG, "  向量模: $omegaMagnitude")
 
-        // Normalize the rotation vector if it's big enough to get the axis
-        // 向量归一化
-        if (omegaMagnitude > 0.01) {
-          axisX /= omegaMagnitude
-          axisY /= omegaMagnitude
-          axisZ /= omegaMagnitude
-        } else {
-          return
-        }
-        Log.v(TAG, "    向量归一化: ($axisX, $axisY, $axisZ)")
+      // Normalize the rotation vector if it's big enough to get the axis
+      // 向量归一化
+      if (omegaMagnitude > 0.01) {
+        axisX /= omegaMagnitude
+        axisY /= omegaMagnitude
+        axisZ /= omegaMagnitude
+      } else {
+        return
+      }
+      Log.v(TAG, "    向量归一化: ($axisX, $axisY, $axisZ)")
 
-        // Integrate around this axis with the angular speed by the time step
-        // in order to get a delta rotation from this sample over the time step
-        // We will convert this axis-angle representation of the delta rotation
-        // into a quaternion before turning it into the rotation matrix.
-        val thetaOverTwo = omegaMagnitude * dT / 2.0f
-        val sinThetaOverTwo = sin(thetaOverTwo)
-        val cosThetaOverTwo = cos(thetaOverTwo)
+      // Integrate around this axis with the angular speed by the time step
+      // in order to get a delta rotation from this sample over the time step
+      // We will convert this axis-angle representation of the delta rotation
+      // into a quaternion before turning it into the rotation matrix.
+      val thetaOverTwo = omegaMagnitude * dT / 2.0f
+      val sinThetaOverTwo = sin(thetaOverTwo)
+      val cosThetaOverTwo = cos(thetaOverTwo)
 //        Log.d(TAG, "θ: $thetaOverTwo")
 //        Log.d(TAG, "sin θ: $sinThetaOverTwo")
 //        Log.d(TAG, "cos θ: $cosThetaOverTwo")
-        deltaRotationVector[0] = sinThetaOverTwo * axisX
-        deltaRotationVector[1] = sinThetaOverTwo * axisY
-        deltaRotationVector[2] = sinThetaOverTwo * axisZ
-        deltaRotationVector[3] = cosThetaOverTwo
+      deltaRotationVector[0] = sinThetaOverTwo * axisX
+      deltaRotationVector[1] = sinThetaOverTwo * axisY
+      deltaRotationVector[2] = sinThetaOverTwo * axisZ
+      deltaRotationVector[3] = cosThetaOverTwo
 //        Log.i(
 //          TAG,
 //          "vec4: (${deltaRotationVector[0]},${deltaRotationVector[1]},${deltaRotationVector[2]},${deltaRotationVector[3]})"
 //        )
-      }
-      timestamp = event.timestamp
+//      }
       val deltaRotationMatrix = FloatArray(16)
       for (i in deltaRotationVector.indices) {
         deltaRotationVector[i] = deltaRotationVector[i] * 0.85f
